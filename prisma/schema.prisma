@@ -1,0 +1,1086 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum UserRole {
+  ADMIN_GERAL
+  LIDER_PROJETO
+  ANALISTA
+  BA
+  QA
+  CRM_BRIDGE
+  DC
+  REPRESENTANTE_MUNICIPAL
+  LEITOR
+}
+
+enum ProjectPhase {
+  PLANEJAMENTO
+  EXECUCAO
+  ESTABILIZACAO
+  PRONTO_TRANSICAO
+  EM_TRANSICAO
+  ENCERRADO
+}
+
+enum ProjectStatus {
+  PLANEJAMENTO
+  EXECUCAO
+  ESTABILIZACAO
+  PRONTO_TRANSICAO
+  EM_TRANSICAO
+  ENCERRADO
+  AGUARDANDO_PRONTIDAO
+  SUSPENSO
+  CANCELADO
+}
+
+enum EntityType {
+  PREFEITURA
+  CAMARA
+  FUNDO
+  AUTARQUIA
+  OUTRO
+}
+
+enum DepartmentStatus {
+  BLOQUEADO
+  NAO_AVALIADO
+  EM_PREPARACAO
+  OPERACAO_ASSISTIDA
+  OPERACIONAL
+}
+
+enum IssueType {
+  DUVIDA
+  PARAMETRIZACAO
+  MIGRACAO
+  MELHORIA
+  ERRO
+  INFRAESTRUTURA
+  DEPENDENCIA_MUNICIPAL
+}
+
+enum IssuePriority {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum IssueStatus {
+  ABERTA
+  EM_ANALISE
+  EM_EXECUCAO
+  AGUARDANDO_VALIDACAO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum WaitingCondition {
+  NENHUMA
+  AGUARDANDO_MUNICIPIO
+  AGUARDANDO_EQUIPE_INTERNA
+  AGUARDANDO_TERCEIRO
+}
+
+enum WaitingType {
+  BASE_LEGADA
+  LEGISLACAO
+  PLANILHA
+  INDICACAO_RESPONSAVEL
+  ACESSO
+  CERTIFICADO
+  ASSINATURA
+  VALIDACAO
+  OUTRO
+}
+
+enum TestModality {
+  ASSISTIDA
+  AUTONOMA
+}
+
+enum TestResult {
+  APROVADO
+  REPROVADO
+}
+
+enum TrainingStatus {
+  PLANEJADO
+  CONFIRMADO
+  REALIZADO
+  CANCELADO
+}
+
+enum RuleStatus {
+  RASCUNHO
+  EM_VALIDACAO
+  VALIDADA
+  SUBSTITUIDA_ARQUIVADA
+}
+
+enum DiaryStatus {
+  RASCUNHO
+  PUBLICADO
+  CORRIGIDO
+}
+
+enum MeetingStatus {
+  RASCUNHO
+  REVISADA
+  EMITIDA
+  ENVIADA
+  PARCIALMENTE_ASSINADA
+  ASSINADA
+  RECUSA_REGISTRADA
+  SUBSTITUIDA
+}
+
+enum DocumentType {
+  ATA
+  TERMO_ABERTURA
+  TERMO_DADOS_LEGADOS
+  CHECKLIST_AUTONOMIA
+  LISTA_PRESENCA
+  EVIDENCIA_MIGRACAO
+  TESTE_HOMOLOGACAO
+  PORTAL_TRANSPARENCIA
+  PNCP
+  ATA_HANDOVER
+  OUTRO
+}
+
+enum SignatureMethod {
+  CENTISIGN
+  GOV_BR
+  FISICA
+  OUTRO
+}
+
+enum OfficialSystem {
+  TK059_MODULOS
+  TK059_TICKET
+  TK059_OBSERVACAO
+  TK059_DOCUMENTO
+  TK059_CHECKLIST
+  TK090
+  TK102
+  OUTRO
+}
+
+enum ReconciliationStatus {
+  NAO_REGISTRADO
+  PREPARADO_PARA_REGISTRO
+  REGISTRO_MANUAL_DECLARADO
+  CONFERIDO
+  DIVERGENCIA_IDENTIFICADA
+  SINCRONIZADO_AUTOMATICO
+}
+
+enum GPHStatus {
+  EM_ANALISE
+  CONVOCADO
+  EM_ANDAMENTO
+  OPERACAO_ASSISTIDA
+  CONCLUIDO
+  CADUCO
+  CANCELADO
+}
+
+enum NotificationType {
+  TAREFA_ATRIBUIDA
+  PRAZO_FATAL_VENCIDO
+  TESTE_EXPIRADO
+  DIAGNOSTICO_DEFASADO
+  GPH_RESISTENCIA_MUNICIPAL
+  VALIDACAO_PENDENTE
+  ALTERACAO_STATUS_OPERACIONAL
+}
+
+// -----------------------------------------------------------------------------
+// ORGANIZAÇÃO, USUÁRIOS E SEGURANÇA
+// -----------------------------------------------------------------------------
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  cnpj        String?  @unique
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users         User[]
+  municipalities Municipality[]
+  projects      Project[]
+  auditLogs     AuditLog[]
+}
+
+model User {
+  id            String    @id @default(uuid())
+  organizationId String
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          UserRole  @default(ANALISTA)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions      Session[]
+  memberships   ProjectMembership[]
+  departmentAssignments DepartmentAssignment[]
+  createdIssues Issue[]     @relation("IssueAuthor")
+  assignedIssues Issue[]    @relation("IssueAssignee")
+  diaries       DiaryEntry[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  person        Person?
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  sessionToken String   @unique
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  isValid      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Person {
+  id             String   @id @default(uuid())
+  userId         String?  @unique
+  name           String
+  email          String?
+  phone          String?
+  roleTitle      String?  // Ex: "Secretário de Finanças", "Operador de Folha", "Analista Contábil"
+  isMunicipal    Boolean  @default(false)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  responsibleDepartments Department[] @relation("DeptMunicipalResponsible")
+  substituteDepartments  Department[] @relation("DeptMunicipalSubstitute")
+  keyUserDepartments     Department[] @relation("DeptKeyUsers")
+  autonomyRequirements   AutonomyRequirement[]
+  trainingAttendances    TrainingAttendance[]
+  assignedTasks          Task[]
+}
+
+// -----------------------------------------------------------------------------
+// PROJETOS, HIERARQUIA E ESCOPO
+// -----------------------------------------------------------------------------
+
+model Municipality {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String   // Ex: "São Patrício"
+  state          String   // Ex: "GO"
+  ibgeCode       String?
+  timezone       String   @default("America/Sao_Paulo")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects       Project[]
+
+  @@unique([name, state, organizationId])
+}
+
+model Project {
+  id              String        @id @default(uuid())
+  organizationId  String
+  municipalityId  String
+  name            String
+  codePrefix      String        @default("SP") // Ex: "SP" para tickets SP-001
+  description     String?
+  isDemo          Boolean       @default(false) // Flag explícita para dados fictícios
+  phase           ProjectPhase  @default(PLANEJAMENTO)
+  status          ProjectStatus @default(PLANEJAMENTO)
+  legacySystem    String?       // Sistema anterior (ex: "SIGEP", "Outro", null)
+  isSigep         Boolean       @default(false)
+  tk059Ref        String?       // Código do projeto na #TK059
+  dZeroDate       DateTime?     // Marco D+0 de virada de chave
+  plannedStart    DateTime?
+  plannedEnd      DateTime?
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  
+  // Parâmetros configuráveis de governança
+  testValidityDays Int          @default(7) // Padrão: 7 dias corridos
+  diagnosisWarningDays Int      @default(2) // Padrão: 2 dias úteis
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  municipality    Municipality  @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  memberships     ProjectMembership[]
+  entities        Entity[]
+  scopeRevisions  ScopeRevision[]
+  issues          Issue[]
+  risks           Risk[]
+  escalations     Escalation[]
+  agendaEvents    AgendaEvent[]
+  trainings       Training[]
+  rules           BusinessRuleVersion[]
+  diaries         DiaryEntry[]
+  meetings        Meeting[]
+  documents       Document[]
+  officialRefs    OfficialReference[]
+  readiness       ReadinessAssessment?
+  transitionCycle TransitionCycle?
+  gphInterventions GPHIntervention[]
+  auditLogs       AuditLog[]
+  holidays        HolidayCalendar[]
+}
+
+model ProjectMembership {
+  id         String   @id @default(uuid())
+  projectId  String
+  userId     String
+  role       UserRole
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model Entity {
+  id          String     @id @default(uuid())
+  projectId   String
+  name        String     // Ex: "Prefeitura Municipal", "Câmara de Vereadores"
+  type        EntityType @default(PREFEITURA)
+  identifier  String?    // CNPJ opcional
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  departments Department[]
+}
+
+model ModuleCatalog {
+  id          String   @id @default(uuid())
+  name        String   @unique // Ex: "Folha/RH", "Contabilidade", "Compras/Licitações", "Almoxarifado", "Patrimônio", "Frotas", "Arrecadação", "Protocolo"
+  code        String   @unique // Ex: "FOLHA", "CONTABILIDADE", "COMPRAS", "ALMOXARIFADO", "PATRIMONIO", "FROTAS", "ARRECADACAO", "PROTOCOLO"
+  description String?
+  isCore      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  departmentModules DepartmentModule[]
+}
+
+model Department {
+  id                      String           @id @default(uuid())
+  entityId                String
+  name                    String           // Ex: "Recursos Humanos / Folha"
+  criticality             IssuePriority    @default(ALTA)
+  operationalStatus       DepartmentStatus @default(NAO_AVALIADO)
+  revalidationRequired    Boolean          @default(false)
+  revalidationReason      String?
+  lastDiagnosisAt         DateTime?
+  lastDiagnosisNote       String?
+  
+  // Checklist de pré-requisitos para status Operacional
+  isDataMigrationValidated Boolean         @default(false)
+  dataMigrationValidatedAt DateTime?
+  isParametrizationValidated Boolean       @default(false)
+  parametrizationValidatedAt DateTime?
+  isTrainingCompleted     Boolean          @default(false)
+  trainingCompletedAt     DateTime?
+  isLeaderValidated       Boolean          @default(false)
+  leaderValidatedAt       DateTime?
+  leaderValidatorName     String?
+
+  // Pessoas vinculadas
+  municipalResponsibleId String?
+  municipalSubstituteId  String?
+
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  entity                  Entity           @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  municipalResponsible    Person?          @relation("DeptMunicipalResponsible", fields: [municipalResponsibleId], references: [id], onDelete: SetNull)
+  municipalSubstitute     Person?          @relation("DeptMunicipalSubstitute", fields: [municipalSubstituteId], references: [id], onDelete: SetNull)
+  keyUsers                Person[]         @relation("DeptKeyUsers")
+  assignments             DepartmentAssignment[]
+  modules                 DepartmentModule[]
+  criticalProcesses       CriticalProcess[]
+  deliverables            Deliverable[]
+  issues                  Issue[]
+  diaries                 DiaryEntry[]
+}
+
+model DepartmentAssignment {
+  id           String     @id @default(uuid())
+  departmentId String
+  userId       String
+  isLead       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, userId])
+}
+
+model DepartmentModule {
+  id           String        @id @default(uuid())
+  departmentId String
+  moduleId     String
+  scopeNotes   String?
+  createdAt    DateTime      @default(now())
+
+  department   Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  module       ModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, moduleId])
+}
+
+model ScopeRevision {
+  id          String   @id @default(uuid())
+  projectId   String
+  version     Int      @default(1)
+  description String
+  approvedBy  String
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// PROCESSOS CRÍTICOS, DEPENDÊNCIAS, ENTREGAS E AUTONOMIA
+// -----------------------------------------------------------------------------
+
+model CriticalProcess {
+  id              String         @id @default(uuid())
+  departmentId    String
+  name            String         // Ex: "Fechamento Mensal da Folha"
+  objective       String?
+  criticality     IssuePriority  @default(ALTA)
+  steps           String?        // Descrição das etapas
+  expectedResult  String?        // Critérios de aceite
+  evidenceRequired Boolean       @default(true)
+  dueDate         DateTime?
+  version         Int            @default(1) // Controle de concorrência otimista (OCC)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  department      Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  dependencies    ProcessDependency[] @relation("ProcessDependsOn")
+  dependents      ProcessDependency[] @relation("ProcessRequiredFor")
+  autonomyReqs    AutonomyRequirement[]
+  testExecutions  TestExecution[]
+  issues          Issue[]
+}
+
+model ProcessDependency {
+  id              String          @id @default(uuid())
+  processId       String
+  dependsOnId     String
+  reason          String?
+  createdAt       DateTime        @default(now())
+
+  process         CriticalProcess @relation("ProcessDependsOn", fields: [processId], references: [id], onDelete: Cascade)
+  dependsOn       CriticalProcess @relation("ProcessRequiredFor", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@unique([processId, dependsOnId])
+}
+
+model AutonomyRequirement {
+  id          String          @id @default(uuid())
+  processId   String
+  personId    String
+  roleTitle   String?
+  isApproved  Boolean         @default(false)
+  approvedAt  DateTime?
+  version     Int             @default(1)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  process     CriticalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+  person      Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+  tests       TestExecution[]
+
+  @@unique([processId, personId])
+}
+
+model TestExecution {
+  id              String          @id @default(uuid())
+  processId       String
+  autonomyReqId   String?
+  executorName    String
+  evaluatorName   String
+  executedAt      DateTime        @default(now())
+  environment     String          @default("HOMOLOGACAO") // "TREINAMENTO", "HOMOLOGACAO", "PRODUCAO"
+  modality        TestModality    @default(ASSISTIDA)
+  result          TestResult
+  observedResult  String
+  evidenceFileId  String?
+  createdAt       DateTime        @default(now())
+
+  process         CriticalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+  autonomyReq     AutonomyRequirement? @relation(fields: [autonomyReqId], references: [id], onDelete: SetNull)
+  evidenceFile    Document?       @relation(fields: [evidenceFileId], references: [id], onDelete: SetNull)
+}
+
+model Deliverable {
+  id              String         @id @default(uuid())
+  departmentId    String
+  name            String         // Ex: "Saldo Inicial de Almoxarifado"
+  description     String?
+  isMandatory     Boolean        @default(true)
+  isValidated     Boolean        @default(false)
+  validatedAt     DateTime?
+  validatedBy     String?
+  isWaived        Boolean        @default(false) // Dispensa de entrega
+  waiveReason     String?
+  waivedBy        String?
+  dueDate         DateTime?
+  version         Int            @default(1)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  department      Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  evidenceLinks   EvidenceLink[]
+}
+
+model EvidenceLink {
+  id            String      @id @default(uuid())
+  deliverableId String
+  documentId    String
+  createdAt     DateTime    @default(now())
+
+  deliverable   Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  document      Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([deliverableId, documentId])
+}
+
+// -----------------------------------------------------------------------------
+// PENDÊNCIAS, TAREFAS, ESPERA E RISCOS
+// -----------------------------------------------------------------------------
+
+model Issue {
+  id                   String           @id @default(uuid())
+  projectId            String
+  codeNumber           Int              // Número sequencial legível (ex: 1 -> SP-001)
+  departmentId         String?
+  criticalProcessId    String?
+  title                String
+  description          String
+  type                 IssueType        @default(DUVIDA)
+  priority             IssuePriority    @default(MEDIA)
+  status               IssueStatus      @default(ABERTA)
+  isOperationalBlocker Boolean          @default(false) // Bloqueio operacional real
+  isInternal           Boolean          @default(false) // Notas e discussões internas Centi
+  
+  authorId             String
+  assigneeId           String?
+  dueDate              DateTime?
+  nextAction           String?
+  resolutionSummary    String?
+  resolvedAt           DateTime?
+  resolvedBy           String?
+
+  // Condição de espera independente
+  waitingCondition     WaitingCondition @default(NENHUMA)
+  waitingType          WaitingType?
+  waitingReason        String?
+  waitingContact       String?
+  waitingStartedAt     DateTime?
+  totalWaitingMinutes  Int              @default(0)
+
+  originMeetingId      String?
+  officialRefId        String?
+  version              Int              @default(1) // OCC
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  department           Department?      @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  criticalProcess      CriticalProcess? @relation(fields: [criticalProcessId], references: [id], onDelete: SetNull)
+  author               User             @relation("IssueAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  assignee             User?            @relation("IssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  officialRef          OfficialReference? @relation(fields: [officialRefId], references: [id], onDelete: SetNull)
+  statusHistory        IssueStatusHistory[]
+  waitingIntervals     WaitingInterval[]
+  documents            Document[]
+
+  @@unique([projectId, codeNumber])
+}
+
+model IssueStatusHistory {
+  id         String      @id @default(uuid())
+  issueId    String
+  fromStatus IssueStatus
+  toStatus   IssueStatus
+  changedBy  String
+  note       String?
+  createdAt  DateTime    @default(now())
+
+  issue      Issue       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model WaitingInterval {
+  id             String           @id @default(uuid())
+  issueId        String
+  condition      WaitingCondition
+  type           WaitingType?
+  reason         String?
+  startedAt      DateTime         @default(now())
+  endedAt        DateTime?
+  durationMinutes Int?
+  createdAt      DateTime         @default(now())
+
+  issue          Issue            @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id             String    @id @default(uuid())
+  originDecisionId String?
+  title          String
+  responsibleName String
+  responsiblePersonId String?
+  dueDateFatal   DateTime
+  isCompleted    Boolean   @default(false)
+  completedAt    DateTime?
+  notes          String?
+  version        Int       @default(1)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  decision       MeetingDecision? @relation(fields: [originDecisionId], references: [id], onDelete: SetNull)
+  person         Person?          @relation(fields: [responsiblePersonId], references: [id], onDelete: SetNull)
+
+  @@unique([originDecisionId, title]) // Idempotência de tarefas geradas por decisão
+}
+
+model Risk {
+  id             String        @id @default(uuid())
+  projectId      String
+  description    String
+  cause          String?
+  consequence    String?
+  probability    Int           @default(3) // 1 a 5
+  impact         Int           @default(3) // 1 a 5
+  exposure       Int           @default(9) // probabilidade * impacto (1 a 25)
+  responsible    String
+  responsePlan   String?       // Mitigação
+  contingencyPlan String?      // Contingência
+  dueDate        DateTime?
+  status         String        @default("MONITORADO") // "IDENTIFICADO", "MONITORADO", "MATERIALIZADO", "ENCERRADO"
+  materializedIssueId String?  // Vínculo se materializar
+  isInternal     Boolean       @default(true) // Risco interno da Centi
+  version        Int           @default(1)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Escalation {
+  id             String        @id @default(uuid())
+  projectId      String
+  level          Int           // 1: Vicenti/triagem; 2: Service Desk; 3: QA/governança; 4: BAs e CRM; 5: DC
+  reason         String
+  evidences      String?
+  recipientRole  UserRole
+  responsible    String
+  feedbackNote   String?
+  resolvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// CAMPO: AGENDA, TREINAMENTOS, WIKI E DIÁRIO
+// -----------------------------------------------------------------------------
+
+model AgendaEvent {
+  id             String    @id @default(uuid())
+  projectId      String
+  title          String
+  type           String    // "TREINAMENTO", "VISITA_CAMPO", "REUNIAO_GOVERNANCA", "MARCO", "TESTE", "RITUAL"
+  startDateTime  DateTime
+  endDateTime    DateTime
+  timezone       String    @default("America/Sao_Paulo")
+  location       String?
+  responsibleName String
+  responsibleEmail String?
+  participants   String?
+  departmentId   String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Training {
+  id              String         @id @default(uuid())
+  projectId       String
+  subject         String         // Assunto / Módulo
+  moduleCode      String?
+  objectives      String?
+  plannedContent  String?
+  deliveredContent String?
+  instructorName  String
+  location        String?
+  status          TrainingStatus @default(PLANEJADO)
+  scheduledDate   DateTime
+  durationMinutes Int            @default(120)
+  materialUrl     String?
+  version         Int            @default(1)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attendances     TrainingAttendance[]
+}
+
+model TrainingAttendance {
+  id             String    @id @default(uuid())
+  trainingId     String
+  personId       String
+  isPresent      Boolean   @default(false)
+  evaluationScore Float?
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  training       Training  @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  person         Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, personId])
+}
+
+model BusinessRuleVersion {
+  id             String     @id @default(uuid())
+  projectId      String
+  title          String
+  category       String     // "CALCULO", "INTEGRACAO", "MIGRACAO", "ROTINA", "PERFIL_USUARIO", "PARTICULARIDADE_MUNICIPAL", "ACORDO_OPERACIONAL"
+  departmentCode String?
+  clientVerbalText String   // Relato verbal fornecido pelo município
+  technicalOpinion String?  // Parecer técnico do analista/BA da Centi
+  status         RuleStatus @default(RASCUNHO)
+  informantName  String?
+  validatorName  String?
+  effectiveDate  DateTime?
+  versionNumber  Int        @default(1)
+  version        Int        @default(1) // OCC
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model DiaryEntry {
+  id              String      @id @default(uuid())
+  projectId       String
+  departmentId    String?
+  authorId        String
+  entryDate       DateTime    @default(now())
+  activity        String
+  workedContent   String
+  resultObserved  String
+  findings        String?     // Particularidades descobertas
+  nextSteps       String?
+  status          DiaryStatus @default(RASCUNHO)
+  isInternal      Boolean     @default(false)
+  version         Int         @default(1)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  department      Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  author          User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// GOVERNANÇA: ATAS, SNAPSHOTS E FORMALIZAÇÃO
+// -----------------------------------------------------------------------------
+
+model Meeting {
+  id                  String        @id @default(uuid())
+  projectId           String
+  title               String        @default("ATA DE REUNIÃO SEMANAL DE GOVERNANÇA")
+  meetingDate         DateTime
+  startTime           String        // Ex: "09:00"
+  endTime             String        // Ex: "10:30"
+  location            String
+  executionLeader     String        // Responsável pela execução (Líder Centi)
+  status              MeetingStatus @default(RASCUNHO)
+  versionNumber       Int           @default(1)
+  
+  participantsCenti   String        // Representantes da Contratada
+  participantsClient  String        // Representantes da Contratante
+
+  // Seções 1 a 5 da ata corporativa
+  section1ScheduleStatus String     // 1. STATUS ATUAL DO CRONOGRAMA
+  section2CriticalPoints String     // 2. PONTOS CRÍTICOS E IMPEDIMENTOS IDENTIFICADOS
+  section3StrategicRealignments String // 3. DECISÕES E REALINHAMENTOS ESTRATÉGICOS
+  section4ActionPlanSummary String? // 4. PLANO DE AÇÃO PARA A PRÓXIMA SEMANA
+  section5GeneralSafeguards String // 5. OBSERVAÇÕES GERAIS E SALVAGUARDAS
+
+  version             Int           @default(1) // OCC
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  project             Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  decisions           MeetingDecision[]
+  snapshot            MeetingSnapshot?
+  document            Document?
+}
+
+model MeetingDecision {
+  id          String    @id @default(uuid())
+  meetingId   String
+  number      Int       // 1, 2, 3...
+  description String
+  createdAt   DateTime  @default(now())
+
+  meeting     Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+}
+
+model MeetingSnapshot {
+  id                  String   @id @default(uuid())
+  meetingId           String   @unique
+  frozenAt            DateTime @default(now())
+  frozenBy            String
+  templateVersion     String   @default("NOP-001/2026-v12.5")
+  snapshotDataJson    String   // JSON com todo o conteúdo textual, métricas, plano de ação e hashes
+
+  meeting             Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// DOCUMENTOS PRIVADOS, VERSÕES E FORMALIZAÇÃO
+// -----------------------------------------------------------------------------
+
+model Document {
+  id            String         @id @default(uuid())
+  projectId     String
+  meetingId     String?        @unique
+  issueId       String?
+  title         String
+  type          DocumentType   @default(OUTRO)
+  isSigned      Boolean        @default(false)
+  currentVersion Int           @default(1)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meeting       Meeting?       @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  issue         Issue?         @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  versions      DocumentVersion[]
+  formalizations FormalizationAttempt[]
+  evidenceLinks EvidenceLink[]
+  testExecutions TestExecution[]
+  officialRefs  OfficialReference[]
+}
+
+model DocumentVersion {
+  id            String   @id @default(uuid())
+  documentId    String
+  versionNumber Int
+  fileName      String
+  fileSize      Int
+  mimeType      String
+  sha256Hash    String
+  storagePath   String
+  uploadedBy    String
+  createdAt     DateTime @default(now())
+
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNumber])
+}
+
+model FormalizationAttempt {
+  id             String          @id @default(uuid())
+  documentId     String
+  channel        String          // "CENTISIGN", "GOV_BR", "EMAIL", "PRESENCIAL", "OUTRO"
+  method         SignatureMethod @default(CENTISIGN)
+  recipientName  String
+  recipientRole  String?
+  sentAt         DateTime        @default(now())
+  returnedAt     DateTime?
+  isRefused      Boolean         @default(false)
+  refusalReason  String?
+  notes          String?
+  createdAt      DateTime        @default(now())
+
+  document       Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// CONCILIAÇÃO OFICIAL: #TK059, #TK090, #TK102
+// -----------------------------------------------------------------------------
+
+model OfficialReference {
+  id                 String               @id @default(uuid())
+  projectId          String
+  system             OfficialSystem
+  identifier         String               // Ex: "#TK059-MOD-01", "#TK090-DIAG"
+  destinationTab     String?              // "Modulos", "Ticket", "Observacao", "Documento", "Checklist"
+  url                String?
+  status             ReconciliationStatus @default(NAO_REGISTRADO)
+  lastCheckedAt      DateTime?
+  checkedBy          String?
+  localVersionCovered Int                 @default(1)
+  documentId         String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  project            Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  document           Document?            @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  issues             Issue[]
+}
+
+// -----------------------------------------------------------------------------
+// TRANSIÇÃO, PRONTIDÃO, BRIDGE E GPH
+// -----------------------------------------------------------------------------
+
+model ReadinessAssessment {
+  id                    String   @id @default(uuid())
+  projectId             String   @unique
+  initialAccountingValidated Boolean @default(false)
+  initialFinancialValidated  Boolean @default(false)
+  initialInventoryValidated  Boolean @default(false)
+  transparencyPortalWorking  Boolean @default(false)
+  pncpFirstTransmissionOk    Boolean @default(false)
+  wikiConsolidated          Boolean @default(false)
+  allAutonomyProven         Boolean @default(false)
+  leaderTechnicalVerdict    Boolean @default(false)
+  leaderVerdictNotes        String?
+  assessedAt                DateTime?
+  assessedBy                String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  project               Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model TransitionCycle {
+  id               String    @id @default(uuid())
+  projectId        String    @unique
+  bridgeDurationDays Int     @default(20)
+  bridgeStartedAt  DateTime?
+  bridgeEndedAt    DateTime?
+  crmResponsible   String?
+  qaSubstitute     String?
+  serviceDeskLead  String?
+  handoverCompletedAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model GPHIntervention {
+  id               String    @id @default(uuid())
+  projectId        String
+  status           GPHStatus @default(EM_ANALISE)
+  tk090Reference   String?   // Vínculo obrigatório ao ticket técnico
+  crmEvaluator     String
+  baTechnicalLead  String
+  dcConvoker       String
+  immersionStart   DateTime?
+  immersionEnd     DateTime?
+  assistedOpStart  DateTime?
+  assistedOpEnd    DateTime?
+  
+  // Alerta de resistência municipal (> 3 dias úteis consecutivos)
+  hasMunicipalResistance Boolean @default(false)
+  resistanceConsecutiveDays Int @default(0)
+  resistanceReason String?
+  
+  dcCaducityDecreed Boolean  @default(false)
+  dcCaducityReason  String?
+  dcCaducityDate    DateTime?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// AUDITORIA, NOTIFICAÇÕES E CALENDÁRIO
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  projectId      String?
+  actorId        String
+  actorName      String
+  action         String   // "CREATE", "UPDATE", "DELETE", "VALIDATE", "EMIT", "CONVOKE", "DISPENSE"
+  targetType     String   // "Department", "Issue", "Meeting", "TestExecution", "GPH", etc.
+  targetId       String
+  changedFields  String?  // JSON com diff dos campos alterados
+  justification  String?
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  actor          User         @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  linkUrl     String?
+  isRead      Boolean          @default(false)
+  idempotencyKey String?       @unique // Tipo:Alvo:Destinatário:DataBucket
+  createdAt   DateTime         @default(now())
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HolidayCalendar {
+  id          String   @id @default(uuid())
+  projectId   String
+  date        DateTime // Data do feriado
+  description String   // Ex: "Feriado Municipal de São Patrício"
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, date])
+}
