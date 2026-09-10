@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { AppLayout } from "@/components/layout/AppLayout";
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
   children,

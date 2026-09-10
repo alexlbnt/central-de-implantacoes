@@ -5,18 +5,26 @@ import { UserRole } from "@prisma/client";
 import { UserSessionContext } from "./auth-guards";
 
 export async function getCurrentUser() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return null;
+    }
+    return session.user as {
+      id: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      organizationId: string;
+      organizationName: string;
+    };
+  } catch (error: any) {
+    if (error?.digest === "DYNAMIC_SERVER_USAGE" || error?.message?.includes("Dynamic server usage")) {
+      throw error;
+    }
+    console.warn("Aviso ao obter sessão do usuário:", error);
     return null;
   }
-  return session.user as {
-    id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    organizationId: string;
-    organizationName: string;
-  };
 }
 
 export async function getCurrentUserContext(): Promise<UserSessionContext | null> {

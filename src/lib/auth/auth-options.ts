@@ -5,6 +5,7 @@ import prisma from "../db/prisma";
 import { UserRole } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "chave-secreta-de-desenvolvimento-central-de-implantacoes-centi",
   session: {
     strategy: "jwt",
     maxAge: 8 * 60 * 60, // 8 horas de sessão ativa

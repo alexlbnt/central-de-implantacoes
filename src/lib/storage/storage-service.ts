@@ -52,11 +52,16 @@ export class StorageService {
 
   constructor() {
     this.driver = (process.env.STORAGE_DRIVER as "local" | "s3") || "local";
-    this.localDir = path.resolve(process.env.LOCAL_STORAGE_DIR || "./data/storage");
+    const defaultDir = process.env.VERCEL ? "/tmp/storage" : "./data/storage";
+    this.localDir = path.resolve(process.env.LOCAL_STORAGE_DIR || defaultDir);
 
     if (this.driver === "local") {
-      if (!fs.existsSync(this.localDir)) {
-        fs.mkdirSync(this.localDir, { recursive: true });
+      try {
+        if (!fs.existsSync(this.localDir)) {
+          fs.mkdirSync(this.localDir, { recursive: true });
+        }
+      } catch (err) {
+        console.warn("Aviso ao criar diretório local de storage:", err);
       }
     } else {
       this.s3Bucket = process.env.S3_BUCKET || "documentos-centi";
