@@ -2,7 +2,6 @@ import React from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
-import { revalidatePath } from "next/cache";
 import {
   Users,
   ShieldCheck,
@@ -20,6 +19,7 @@ import {
   AddTeamMemberButton,
   TeamMemberItemActions,
 } from "@/components/team/TeamMemberAdminManager";
+import { createMunicipalPersonAction } from "@/lib/actions/team-actions";
 
 export default async function EquipePage({
   searchParams,
@@ -29,33 +29,38 @@ export default async function EquipePage({
   const user = await getCurrentUser();
   const params = await searchParams;
 
-  const project = await prisma.project.findFirst({
-    where: params?.projectId ? { id: params.projectId } : {},
-    include: {
-      municipality: true,
-      memberships: {
-        include: {
-          user: {
-            include: {
-              departmentAssignments: {
-                include: { department: true },
+  let project = null;
+  try {
+    project = await prisma.project.findFirst({
+      where: params?.projectId ? { id: params.projectId } : {},
+      include: {
+        municipality: true,
+        memberships: {
+          include: {
+            user: {
+              include: {
+                departmentAssignments: {
+                  include: { department: true },
+                },
+              },
+            },
+          },
+        },
+        entities: {
+          include: {
+            departments: {
+              include: {
+                municipalResponsible: true,
+                municipalSubstitute: true,
               },
             },
           },
         },
       },
-      entities: {
-        include: {
-          departments: {
-            include: {
-              municipalResponsible: true,
-              municipalSubstitute: true,
-            },
-          },
-        },
-      },
-    },
-  });
+    });
+  } catch (err) {
+    console.error("Erro ao buscar projeto na tela de equipe:", err);
+  }
 
   if (!project) {
     return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado.</div>;
@@ -63,33 +68,43 @@ export default async function EquipePage({
 
   const canManageTeam =
     user?.role === "ADMIN_GERAL" ||
-    project.memberships.some((m) => m.userId === user?.id && m.role === "LIDER_PROJETO");
+    (project.memberships || []).some((m) => m.userId === user?.id && m.role === "LIDER_PROJETO");
 
-  const projectDepartments = project.entities.flatMap((entity) =>
-    entity.departments.map((dept) => ({
+  const projectDepartments = (project.entities || []).flatMap((entity) =>
+    (entity.departments || []).map((dept) => ({
       id: dept.id,
       name: dept.name,
       entityName: entity.name,
     }))
   );
 
-  // Busca pessoas municipais
-  const municipalPersons = await prisma.person.findMany({
-    where: { isMunicipal: true },
-    include: {
-      responsibleDepartments: true,
-      substituteDepartments: true,
-    },
-    orderBy: { name: "asc" },
-  });
+  // Busca pessoas municipais com tratamento defensivo
+  let municipalPersons: any[] = [];
+  try {
+    municipalPersons = await prisma.person.findMany({
+      where: { isMunicipal: true },
+      include: {
+        responsibleDepartments: true,
+        substituteDepartments: true,
+      },
+      orderBy: { name: "asc" },
+    });
+  } catch (err) {
+    console.error("Erro ao buscar contatos municipais:", err);
+  }
 
   // Busca usuários para vincular à equipe Centi
-  const allUsers = await prisma.user.findMany({
-    where: { isActive: true },
-    orderBy: { name: "asc" },
-  });
+  let allUsers: any[] = [];
+  try {
+    allUsers = await prisma.user.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    });
+  } catch (err) {
+    console.error("Erro ao buscar usuários Centi:", err);
+  }
 
-  const existingMemberUserIds = new Set(project.memberships.map((m) => m.userId));
+  const existingMemberUserIds = new Set((project.memberships || []).map((m) => m.userId));
   const availableUsers = allUsers
     .filter((u) => !existingMemberUserIds.has(u.id))
     .map((u) => ({
@@ -99,56 +114,7 @@ export default async function EquipePage({
       role: u.role,
     }));
 
-  // Server Action: Cadastrar Contato Municipal
-  async function createMunicipalPersonAction(formData: FormData) {
-    "use server";
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const roleTitle = formData.get("roleTitle") as string;
-    const notes = formData.get("notes") as string;
-
-    if (!name) return;
-
-    await prisma.person.create({
-      data: {
-        name,
-        email,
-        phone,
-        roleTitle: roleTitle || "Servidor Municipal",
-        isMunicipal: true,
-        notes,
-      },
-    });
-
-    revalidatePath("/equipe");
-  }
-
-  // Server Action: Vincular Membro Centi ao Projeto
-  async function addProjectMemberAction(formData: FormData) {
-    "use server";
-    const userId = formData.get("userId") as string;
-    const role = formData.get("role") as any;
-
-    if (!userId || !role) return;
-
-    await prisma.projectMembership.upsert({
-      where: {
-        projectId_userId: {
-          projectId: project!.id,
-          userId,
-        },
-      },
-      update: { role },
-      create: {
-        userId,
-        projectId: project!.id,
-        role,
-      },
-    });
-
-    revalidatePath("/equipe");
-  }
+  const validMemberships = (project.memberships || []).filter((m) => !!m.user);
 
   return (
     <TeamMemberAdminProvider
@@ -193,54 +159,63 @@ export default async function EquipePage({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                  {project.memberships.length} membro(s)
+                  {validMemberships.length} membro(s)
                 </span>
                 <AddTeamMemberButton />
               </div>
             </div>
 
             <div className="space-y-3">
-              {project.memberships.map((m) => (
-                <div
-                  key={m.id}
-                  className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors bg-slate-50/50 space-y-2"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-bold text-xs text-slate-900">{m.user.name}</div>
-                      <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                        <Mail className="w-3 h-3 text-slate-400" />
-                        {m.user.email}
+              {validMemberships.length === 0 ? (
+                <p className="text-xs text-slate-500 italic py-4 text-center">
+                  Nenhum membro técnico alocado neste projeto ainda.
+                </p>
+              ) : (
+                validMemberships.map((m) => {
+                  const userDeptAssignments = (m.user?.departmentAssignments || []).filter(
+                    (a) => a && a.department && projectDepartments.some((d) => d.id === a.departmentId)
+                  );
+                  return (
+                    <div
+                      key={m.id}
+                      className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors bg-slate-50/50 space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-xs text-slate-900">{m.user?.name || "Colaborador Centi"}</div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-slate-400" />
+                            {m.user?.email || ""}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <StatusBadge status={m.role} />
+                          <TeamMemberItemActions
+                            member={{
+                              membershipId: m.id,
+                              userId: m.user?.id || m.userId,
+                              name: m.user?.name || "Colaborador Centi",
+                              email: m.user?.email || "",
+                              role: m.role,
+                              departmentIds: userDeptAssignments.map((a) => a.departmentId),
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <StatusBadge status={m.role} />
-                      <TeamMemberItemActions
-                        member={{
-                          membershipId: m.id,
-                          userId: m.user.id,
-                          name: m.user.name,
-                          email: m.user.email,
-                          role: m.role,
-                          departmentIds: m.user.departmentAssignments
-                            .filter((a) => projectDepartments.some((d) => d.id === a.departmentId))
-                            .map((a) => a.departmentId),
-                        }}
-                      />
-                    </div>
-                  </div>
 
-                  {m.user.departmentAssignments.length > 0 && (
-                    <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-200">
-                      <span className="font-semibold">Departamentos: </span>
-                      {m.user.departmentAssignments
-                        .filter((a) => projectDepartments.some((d) => d.id === a.departmentId))
-                        .map((a) => a.department.name)
-                        .join(", ") || "Geral / Sem setor específico"}
+                      {userDeptAssignments.length > 0 && (
+                        <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-200">
+                          <span className="font-semibold">Departamentos: </span>
+                          {userDeptAssignments
+                            .map((a) => a.department?.name)
+                            .filter(Boolean)
+                            .join(", ") || "Geral / Sem setor específico"}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
 
             {canManageTeam && (
@@ -312,10 +287,10 @@ export default async function EquipePage({
                     )}
                   </div>
 
-                  {p.responsibleDepartments.length > 0 && (
+                  {(p.responsibleDepartments || []).length > 0 && (
                     <div className="text-[10px] text-slate-500">
                       <strong>Responsável Titular:</strong>{" "}
-                      {p.responsibleDepartments.map((d) => d.name).join(", ")}
+                      {(p.responsibleDepartments || []).map((d: any) => d?.name).filter(Boolean).join(", ")}
                     </div>
                   )}
 

@@ -506,3 +506,32 @@ export async function removeTeamMemberAction(formData: FormData) {
   revalidatePath("/");
   return { success: true };
 }
+
+/**
+ * Server Action: Cadastrar Contato Municipal (sem login na plataforma)
+ */
+export async function createMunicipalPersonAction(formData: FormData): Promise<void> {
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim();
+  const phone = (formData.get("phone") as string)?.trim();
+  const roleTitle = (formData.get("roleTitle") as string)?.trim();
+  const notes = (formData.get("notes") as string)?.trim();
+
+  if (!name) {
+    throw new Error("Nome do contato municipal é obrigatório.");
+  }
+
+  await prisma.person.create({
+    data: {
+      name,
+      email: email || null,
+      phone: phone || null,
+      roleTitle: roleTitle || "Servidor Municipal",
+      isMunicipal: true,
+      notes: notes || null,
+    },
+  });
+
+  revalidatePath("/equipe");
+}
+
