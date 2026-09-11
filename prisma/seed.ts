@@ -128,17 +128,20 @@ async function main() {
     },
   });
 
-  const municipalUser = await prisma.user.upsert({
+  // Contato de Ponto Focal Municipal (Registrado apenas como Person, sem usuário e sem login)
+  let robertoFocalPoint = await prisma.person.findFirst({
     where: { email: "roberto.secretario@saopatricio.go.gov.br" },
-    update: {},
-    create: {
-      name: "Roberto Silva - Secretário de Administração",
-      email: "roberto.secretario@saopatricio.go.gov.br",
-      passwordHash: userPasswordHash,
-      role: UserRole.REPRESENTANTE_MUNICIPAL,
-      organizationId: org.id,
-    },
   });
+  if (!robertoFocalPoint) {
+    robertoFocalPoint = await prisma.person.create({
+      data: {
+        name: "Roberto Silva - Secretário de Administração",
+        email: "roberto.secretario@saopatricio.go.gov.br",
+        roleTitle: "Secretário de Administração",
+        isMunicipal: true,
+      },
+    });
+  }
 
   // 4. Município Real: São Patrício / GO
   const munSaoPatricio = await prisma.municipality.upsert({
@@ -187,7 +190,6 @@ async function main() {
             { userId: qaUser.id, role: UserRole.QA },
             { userId: crmUser.id, role: UserRole.CRM_BRIDGE },
             { userId: dcUser.id, role: UserRole.DC },
-            { userId: municipalUser.id, role: UserRole.REPRESENTANTE_MUNICIPAL },
           ],
         },
         entities: {
@@ -257,7 +259,6 @@ async function main() {
               { userId: qaUser.id, role: UserRole.QA },
               { userId: crmUser.id, role: UserRole.CRM_BRIDGE },
               { userId: dcUser.id, role: UserRole.DC },
-              { userId: municipalUser.id, role: UserRole.REPRESENTANTE_MUNICIPAL },
             ],
           },
         },

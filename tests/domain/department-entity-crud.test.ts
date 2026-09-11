@@ -126,7 +126,6 @@ describe("Gestão de Departamentos e Instâncias Setoriais por ADMIN_GERAL", () 
       const rolesToReject = [
         UserRole.LIDER_PROJETO,
         UserRole.ANALISTA,
-        UserRole.REPRESENTANTE_MUNICIPAL,
         UserRole.LEITOR,
         UserRole.DC,
         UserRole.CRM_BRIDGE,

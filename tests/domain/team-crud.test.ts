@@ -167,10 +167,9 @@ describe("Gestão de Membros da Equipe Técnica (Admin Geral e Líder de Implant
       expect(check.allowed).toBe(true);
     });
 
-    it("deve bloquear outros papéis (Analista, Representante Municipal, QA sem líder)", () => {
+    it("deve bloquear outros papéis (Analista, Leitor, QA sem líder, etc.)", () => {
       const rolesToBlock = [
         UserRole.ANALISTA,
-        UserRole.REPRESENTANTE_MUNICIPAL,
         UserRole.LEITOR,
         UserRole.QA,
         UserRole.BA,
@@ -267,6 +266,21 @@ describe("Gestão de Membros da Equipe Técnica (Admin Geral e Líder de Implant
       });
       expect(audit).not.toBeNull();
       expect(audit?.actorId).toBe(testLeaderUser.id);
+    });
+
+    it("deve rejeitar tentativa de cadastrar usuário para cliente ou servidor municipal", async () => {
+      mockCurrentUser = testLeaderUser;
+
+      const formData = new FormData();
+      formData.set("projectId", projectId);
+      formData.set("mode", "new_user");
+      formData.set("name", "Roberto Secretário");
+      formData.set("email", "roberto@saopatricio.go.gov.br");
+      formData.set("role", "ANALISTA");
+
+      await expect(createTeamMemberAction(formData)).rejects.toThrow(
+        "servidores e clientes municipais não podem possuir conta de usuário"
+      );
     });
 
     it("[Admin Geral] deve alocar usuário Centi EXISTENTE no projeto", async () => {

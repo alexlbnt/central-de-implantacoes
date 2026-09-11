@@ -188,7 +188,7 @@ export default async function EquipePage({
                 <ShieldCheck className="w-5 h-5 text-emerald-700" />
                 <div>
                   <h2 className="text-sm font-bold text-slate-900">Equipe Técnica Centi Soluções</h2>
-                  <p className="text-[11px] text-slate-500">Líderes, Analistas, BAs e QA do projeto</p>
+                  <p className="text-[11px] text-slate-500">Colaboradores Centi com usuário e acesso ativo à Central</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -260,12 +260,23 @@ export default async function EquipePage({
                 <h2 className="text-sm font-bold text-slate-900">
                   Pontos Focais do Município ({project.municipality.name})
                 </h2>
-                <p className="text-[11px] text-slate-500">Secretários, diretores e operadores-chave</p>
+                <p className="text-[11px] text-slate-500">Contatos de referência e responsáveis pelos setores (sem login)</p>
               </div>
             </div>
             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
               {municipalPersons.length} cadastrado(s)
             </span>
+          </div>
+
+          {/* Aviso de Uso Interno Centi */}
+          <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-950 text-[11px] space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+              <span>Registro de Contatos & Titulares Setoriais</span>
+            </div>
+            <p className="text-slate-600">
+              Os servidores municipais cadastrados aqui servem para controle de presenças em treinamentos e validação de autonomia. <strong>Eles não possuem acesso nem usuário na Central Centi.</strong>
+            </p>
           </div>
 
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">

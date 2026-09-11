@@ -61,7 +61,7 @@ export class AuthGuard {
       return { allowed: true };
     }
 
-    // Se for Representante Municipal ou Analista com atribuição específica
+    // Se for Analista com atribuição setorial específica
     const hasAssignment = context.departmentAssignments.some((d) => d.departmentId === departmentId);
     if (!hasAssignment) {
       return {
@@ -75,10 +75,10 @@ export class AuthGuard {
 
   /**
    * Verifica se o usuário tem permissão para visualizar itens confidenciais / notas internas Centi.
-   * Representantes Municipais e Leitores externos são ESTRITAMENTE VEDADOS de acessar notas internas.
+   * Sistema de uso interno Centi: a equipe técnica Centi possui acesso; usuários com perfil LEITOR restrito são vedados.
    */
   public static canViewInternalNotes(context: UserSessionContext): boolean {
-    if (context.role === UserRole.REPRESENTANTE_MUNICIPAL || context.role === UserRole.LEITOR) {
+    if (context.role === UserRole.LEITOR) {
       return false;
     }
     return true;

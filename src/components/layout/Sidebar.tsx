@@ -33,22 +33,56 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const NAVIGATION_ITEMS = [
-  { label: "Visão geral", href: "/", icon: LayoutDashboard },
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const NAVIGATION_GROUPS: NavGroup[] = [
+  {
+    title: "Rotina Diária",
+    items: [
+      { label: "Visão Geral", href: "/", icon: LayoutDashboard },
+      { label: "Planner Semanal", href: "/agenda", icon: Calendar },
+      { label: "Diário de Campo", href: "/diario", icon: FileText },
+    ],
+  },
+  {
+    title: "Setores & Módulos",
+    items: [
+      { label: "Departamentos", href: "/departamentos", icon: Building2 },
+      { label: "Processos & Entregas", href: "/processos", icon: GitPullRequest },
+      { label: "Treinamentos & Autonomia", href: "/treinamentos", icon: GraduationCap },
+      { label: "Regras do Município", href: "/wiki", icon: BookOpen },
+    ],
+  },
+  {
+    title: "Bloqueios & Ação",
+    items: [
+      { label: "Pendências & Kanban", href: "/pendencias", icon: CheckSquare },
+      { label: "Matriz de Riscos", href: "/riscos", icon: AlertTriangle },
+    ],
+  },
+  {
+    title: "Governança & Docs",
+    items: [
+      { label: "Atas de Reunião", href: "/governanca", icon: FileSpreadsheet },
+      { label: "Documentos", href: "/documentos", icon: FolderArchive },
+      { label: "Transição Bridge", href: "/transicao", icon: ArrowRightLeft },
+      { label: "Registros TK059", href: "/conciliacao", icon: ExternalLink },
+    ],
+  },
+];
+
+const UTILITY_ITEMS: NavItem[] = [
+  { label: "Equipe & Contatos", href: "/equipe", icon: Users },
   { label: "Projetos", href: "/projetos", icon: FolderGit2 },
-  { label: "Departamentos", href: "/departamentos", icon: Building2 },
-  { label: "Processos e entregas", href: "/processos", icon: GitPullRequest },
-  { label: "Pendências", href: "/pendencias", icon: CheckSquare },
-  { label: "Riscos", href: "/riscos", icon: AlertTriangle },
-  { label: "Agenda", href: "/agenda", icon: Calendar },
-  { label: "Treinamentos e autonomia", href: "/treinamentos", icon: GraduationCap },
-  { label: "Equipe", href: "/equipe", icon: Users },
-  { label: "Regras do município", href: "/wiki", icon: BookOpen },
-  { label: "Diário de campo", href: "/diario", icon: FileText },
-  { label: "Governança e atas", href: "/governanca", icon: FileSpreadsheet },
-  { label: "Documentos", href: "/documentos", icon: FolderArchive },
-  { label: "Transição", href: "/transicao", icon: ArrowRightLeft },
-  { label: "Registros oficiais", href: "/conciliacao", icon: ExternalLink },
   { label: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
@@ -59,6 +93,68 @@ export function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
+
+  const renderLink = (item: NavItem, groupTitle?: string) => {
+    const isActive =
+      item.href === "/"
+        ? pathname === "/"
+        : pathname === item.href || pathname.startsWith(`${item.href}/`);
+    const Icon = item.icon;
+
+    if (isCollapsed) {
+      return (
+        <div key={item.href} className="relative group flex justify-center">
+          <Link
+            href={item.href}
+            onClick={onClose}
+            title={item.label}
+            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
+              isActive
+                ? "bg-centi-600 text-white shadow-md font-semibold ring-1 ring-emerald-400/40"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/80"
+            }`}
+          >
+            <Icon
+              className={`w-5 h-5 flex-shrink-0 ${
+                isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+              }`}
+            />
+          </Link>
+
+          {/* Tooltip flutuante com nome e grupo */}
+          <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none items-center gap-2 animate-in fade-in zoom-in-95 duration-150">
+            {groupTitle && (
+              <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">
+                {groupTitle} ›
+              </span>
+            )}
+            <span>{item.label}</span>
+            {isActive && (
+              <span className="px-1.5 py-0.5 rounded bg-centi-600 text-[10px] font-semibold text-white">
+                Ativo
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onClose}
+        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          isActive
+            ? "bg-centi-600 text-white shadow-xs font-semibold"
+            : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+        }`}
+      >
+        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -134,60 +230,35 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Links de Navegação */}
-        <div className={`flex-1 overflow-y-auto ${isCollapsed ? "px-2" : "px-3"} py-4 space-y-1.5`}>
-          {NAVIGATION_ITEMS.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
-            const Icon = item.icon;
-
-            if (isCollapsed) {
-              return (
-                <div key={item.href} className="relative group flex justify-center">
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    title={item.label}
-                    className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
-                      isActive
-                        ? "bg-centi-600 text-white shadow-md font-semibold ring-1 ring-emerald-400/40"
-                        : "text-slate-300 hover:text-white hover:bg-slate-800/80"
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"}`} />
-                  </Link>
-
-                  {/* Tooltip flutuante com o nome da página ao passar o mouse */}
-                  <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none items-center gap-2 animate-in fade-in zoom-in-95 duration-150">
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <span className="px-1.5 py-0.5 rounded bg-centi-600 text-[10px] font-semibold text-white">
-                        Ativo
-                      </span>
-                    )}
-                  </div>
+        {/* Links de Navegação Agrupados */}
+        <div className={`flex-1 overflow-y-auto ${isCollapsed ? "px-2" : "px-3"} py-3 space-y-4`}>
+          {NAVIGATION_GROUPS.map((group, groupIdx) => (
+            <div key={group.title} className="space-y-1">
+              {!isCollapsed ? (
+                <div className="px-2 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400/70 select-none">
+                  {group.title}
                 </div>
-              );
-            }
+              ) : groupIdx > 0 ? (
+                <div className="my-2 border-t border-slate-800/80" />
+              ) : null}
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-centi-600 text-white shadow-sm font-semibold"
-                    : "text-slate-300 hover:text-white hover:bg-slate-800/60"
-                }`}
-              >
-                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
+              <div className="space-y-1">
+                {group.items.map((item) => renderLink(item, group.title))}
+              </div>
+            </div>
+          ))}
+
+          {/* Divisor para ferramentas de apoio */}
+          <div className="pt-2 border-t border-slate-800/80">
+            {!isCollapsed && (
+              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 select-none">
+                Apoio & Sistema
+              </div>
+            )}
+            <div className="space-y-1">
+              {UTILITY_ITEMS.map((item) => renderLink(item, "Apoio"))}
+            </div>
+          </div>
         </div>
 
         {/* Rodapé da Sidebar */}

@@ -50,8 +50,8 @@ export default async function PendenciasPage({
       ...(params?.filtro === "aguardando_municipio"
         ? { waitingCondition: "AGUARDANDO_MUNICIPIO" }
         : {}),
-      // Restrição para representante municipal: não vê notas internas
-      ...(user?.role === "REPRESENTANTE_MUNICIPAL" ? { isInternal: false } : {}),
+      // Restrição para usuários com perfil LEITOR: não veem notas e pendências estritamente internas Centi
+      ...(user?.role === "LEITOR" ? { isInternal: false } : {}),
     },
     include: {
       department: true,

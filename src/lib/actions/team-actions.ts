@@ -97,6 +97,21 @@ export async function createTeamMemberAction(formData: FormData) {
   const role = (formData.get("role") as UserRole) || "ANALISTA";
   const departmentIds = parseDepartmentIds(formData);
 
+  // Validação: apenas papéis internos Centi são permitidos
+  const validCentiRoles: UserRole[] = [
+    UserRole.ADMIN_GERAL,
+    UserRole.LIDER_PROJETO,
+    UserRole.ANALISTA,
+    UserRole.BA,
+    UserRole.QA,
+    UserRole.CRM_BRIDGE,
+    UserRole.DC,
+    UserRole.LEITOR,
+  ];
+  if (!validCentiRoles.includes(role)) {
+    throw new Error("Papel inválido. Apenas perfis internos da equipe Centi são permitidos.");
+  }
+
   // Validação dos departamentos pertencentes ao projeto
   let validDepartmentIds: string[] = [];
   if (departmentIds.length > 0) {
@@ -120,6 +135,12 @@ export async function createTeamMemberAction(formData: FormData) {
 
     if (!name || !email) {
       throw new Error("Nome e E-mail do membro técnico são obrigatórios.");
+    }
+
+    if (email.endsWith(".gov.br") || email.includes("prefeitura") || email.includes("camara")) {
+      throw new Error(
+        "Cadastro negado: servidores e clientes municipais não podem possuir conta de usuário na Central Centi. Cadastre-os como Pontos Focais na aba correspondente."
+      );
     }
 
     // Verifica unicidade de e-mail
@@ -292,6 +313,26 @@ export async function updateTeamMemberAction(formData: FormData) {
 
   if (!membershipId || !userId || !name || !email) {
     throw new Error("Dados obrigatórios ausentes para atualização do membro.");
+  }
+
+  const validCentiRoles: UserRole[] = [
+    UserRole.ADMIN_GERAL,
+    UserRole.LIDER_PROJETO,
+    UserRole.ANALISTA,
+    UserRole.BA,
+    UserRole.QA,
+    UserRole.CRM_BRIDGE,
+    UserRole.DC,
+    UserRole.LEITOR,
+  ];
+  if (!validCentiRoles.includes(role)) {
+    throw new Error("Papel inválido. Apenas perfis internos da equipe Centi são permitidos.");
+  }
+
+  if (email.endsWith(".gov.br") || email.includes("prefeitura") || email.includes("camara")) {
+    throw new Error(
+      "Operação negada: servidores e clientes municipais não podem possuir conta de usuário na Central Centi."
+    );
   }
 
   const existingMembership = await prisma.projectMembership.findUnique({

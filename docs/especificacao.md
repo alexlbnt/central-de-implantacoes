@@ -46,11 +46,11 @@ O acesso é governado pela combinação de papel corporativo e atribuição por 
 - **DC (Coordenador de Implantação / Diretor de Contas):**
   - Autoridade de governança corporativa da Centi.
   - Emite a Convocação formal do GPH e homologa a eventual caducidade ou encerramento da intervenção.
-- **REPRESENTANTE_MUNICIPAL (Gestores e Servidores do Município):**
-  - Acesso estritamente restrito aos seus departamentos e entidades autorizadas.
-  - Pode consultar cronograma, validar entregas externas e responder pendências do município.
-  - **Bloqueio Total:** Não tem acesso a notas internas (`isInternal: true`), riscos corporativos internos, escalonamentos confidenciais ou pareceres técnicos internos da Centi.
+- **PONTOS FOCAIS DO MUNICÍPIO (Gestores, Secretários e Servidores Municipais):**
+  - **Uso Interno Exclusivo Centi:** Servidores municipais e clientes NÃO possuem conta de usuário (`User`) e NÃO acessam o sistema.
+  - São cadastrados exclusivamente como pessoas de contato e titulares de setores (`Person` com `isMunicipal: true` e `userId: null`) para registro de presenças em treinamentos e avaliação prática de autonomia operacional.
 - **LEITOR:**
+  - Perfil interno de consulta e auditoria, com acesso de leitura aos projetos autorizados e sem permissão para visualização de notas confidenciais.
   - Consulta restrita a projetos e relatórios autorizados, sem permissão de gravação.
 
 ---

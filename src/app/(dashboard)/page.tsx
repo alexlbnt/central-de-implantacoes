@@ -123,22 +123,22 @@ export default async function DashboardOverviewPage({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho do Painel com Escopo e Instante da Atualização */}
+      {/* Cabeçalho do Painel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              Painel de Gestão da Implantação
+              Painel de Implantação
             </h1>
             {project.isDemo && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                 <Sparkles className="w-3 h-3 text-amber-700" />
-                SIMULAÇÃO
+                DEMO
               </span>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Escopo: <strong className="text-slate-700">{project.name}</strong> ({project.municipality.name} - {project.municipality.state})  |  Fase: <strong className="text-slate-700">{project.phase}</strong>  |  Atualizado em: <span className="font-mono text-slate-600">{nowFormatted}</span>
+            <strong>{project.name}</strong> ({project.municipality.name} - {project.municipality.state}) &bull; Fase: <strong className="text-slate-700">{project.phase}</strong>
           </p>
         </div>
 
@@ -158,12 +158,12 @@ export default async function DashboardOverviewPage({
         </div>
       </div>
 
-      {/* Grid de Indicadores Clicáveis Confiáveis (Fórmulas Reais) */}
+      {/* 4 Indicadores Principais de Alto Impacto */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Departamentos Operacionais"
           value={deptSummary.operationalRatioText}
-          subtitle={`${deptSummary.operational} prontos, ${deptSummary.blocked} bloqueados`}
+          subtitle={`${deptSummary.operational} prontos de ${allDepartments.length} setores`}
           variant={deptSummary.blocked > 0 ? "danger" : deptSummary.operational > 0 ? "success" : "default"}
           icon={<Building2 className="w-5 h-5" />}
           href="/departamentos"
@@ -184,53 +184,70 @@ export default async function DashboardOverviewPage({
           value={autonomyProgress.displayText}
           numerator={autonomyProgress.numerator}
           denominator={autonomyProgress.denominator}
-          subtitle="Usuários-chave autônomos"
+          subtitle="Operadores homologados"
           icon={<GraduationCap className="w-5 h-5" />}
           href="/treinamentos"
         />
 
         <MetricCard
-          title="Bloqueios Críticos"
+          title="Bloqueios Ativos"
           value={activeBlockers.length}
-          subtitle={activeBlockers.length === 0 ? "Nenhum setor travado" : "Exigem ação imediata"}
-          variant={activeBlockers.length > 0 ? "danger" : "default"}
+          subtitle={activeBlockers.length === 0 ? "Nenhum setor travado" : "Exigem ação prioritária"}
+          variant={activeBlockers.length > 0 ? "danger" : "success"}
           icon={<AlertOctagon className="w-5 h-5" />}
           href="/pendencias?filtro=bloqueios"
         />
+      </div>
 
-        <MetricCard
-          title="Ações Vencidas"
-          value={overdueActions.length}
-          subtitle="Prazo fatal expirado"
-          variant={overdueActions.length > 0 ? "warning" : "default"}
-          icon={<CalendarDays className="w-5 h-5" />}
+      {/* Faixa Compacta de Alertas Rápidos */}
+      <div className="flex flex-wrap items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">
+          Atenção Rápida:
+        </span>
+
+        <Link
           href="/pendencias?filtro=vencidas"
-        />
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-colors ${
+            overdueActions.length > 0
+              ? "bg-amber-100/80 text-amber-900 hover:bg-amber-100 border border-amber-300/80"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <CalendarDays className="w-3.5 h-3.5 text-amber-600" />
+          <span>Ações Vencidas: <strong>{overdueActions.length}</strong></span>
+        </Link>
 
-        <MetricCard
-          title="Aguardando Município"
-          value={waitingMunicipal.length}
-          subtitle="Bases, leis e aprovações"
-          icon={<Clock className="w-5 h-5" />}
+        <Link
           href="/pendencias?filtro=aguardando_municipio"
-        />
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-colors ${
+            waitingMunicipal.length > 0
+              ? "bg-blue-50 text-blue-900 hover:bg-blue-100 border border-blue-200"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5 text-blue-600" />
+          <span>Aguardando Município: <strong>{waitingMunicipal.length}</strong></span>
+        </Link>
 
-        <MetricCard
-          title="Revalidação Necessária"
-          value={deptSummary.revalidationRequired}
-          subtitle="Testes expirados (> 7 dias)"
-          variant={deptSummary.revalidationRequired > 0 ? "warning" : "default"}
-          icon={<RefreshCw className="w-5 h-5" />}
+        <Link
           href="/departamentos?filtro=revalidacao"
-        />
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-colors ${
+            deptSummary.revalidationRequired > 0
+              ? "bg-orange-50 text-orange-900 hover:bg-orange-100 border border-orange-200"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <RefreshCw className="w-3.5 h-3.5 text-orange-600" />
+          <span>Revalidação (&gt; 7 dias): <strong>{deptSummary.revalidationRequired}</strong></span>
+        </Link>
 
-        <MetricCard
-          title="Formalização Pendente"
-          value={project.issues.filter((i) => i.waitingType === "ASSINATURA").length}
-          subtitle="Termos e atas sem assinar"
-          icon={<FileSignature className="w-5 h-5" />}
+        <Link
           href="/documentos"
-        />
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
+        >
+          <FileSignature className="w-3.5 h-3.5 text-slate-500" />
+          <span>Assinaturas Pendentes: <strong>{project.issues.filter((i) => i.waitingType === "ASSINATURA").length}</strong></span>
+        </Link>
       </div>
 
       {/* Seção Central Dividida: Tabela de Departamentos + Painéis de Atenção */}
@@ -240,10 +257,10 @@ export default async function DashboardOverviewPage({
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
-                Matriz Operacional dos Departamentos
+                Situação dos Departamentos
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Situação funcional calculada por critérios cumulativos no servidor.
+                Progresso funcional, responsáveis e bloqueios por setor.
               </p>
             </div>
             <Link

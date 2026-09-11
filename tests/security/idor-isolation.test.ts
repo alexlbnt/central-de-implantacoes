@@ -11,12 +11,20 @@ describe("Segurança: Proteção Contra IDOR e Isolamento de Perfis (Critério 0
     departmentAssignments: [{ departmentId: "dept_folha", isLead: false }],
   };
 
-  const municipalContext: UserSessionContext = {
-    userId: "user_servidor_mun",
+  const analistaRestritoContext: UserSessionContext = {
+    userId: "user_analista_almoxarifado",
     organizationId: "org_centi",
-    role: UserRole.REPRESENTANTE_MUNICIPAL,
-    projectMemberships: [{ projectId: "proj_sao_patricio", role: UserRole.REPRESENTANTE_MUNICIPAL }],
+    role: UserRole.ANALISTA,
+    projectMemberships: [{ projectId: "proj_sao_patricio", role: UserRole.ANALISTA }],
     departmentAssignments: [{ departmentId: "dept_almoxarifado", isLead: false }],
+  };
+
+  const leitorContext: UserSessionContext = {
+    userId: "user_leitor_auditoria",
+    organizationId: "org_centi",
+    role: UserRole.LEITOR,
+    projectMemberships: [{ projectId: "proj_sao_patricio", role: UserRole.LEITOR }],
+    departmentAssignments: [],
   };
 
   const adminContext: UserSessionContext = {
@@ -35,19 +43,19 @@ describe("Segurança: Proteção Contra IDOR e Isolamento de Perfis (Critério 0
     expect(access.reason).toContain("Acesso negado");
   });
 
-  it("[Critério 03] Representante municipal só acessa seus departamentos autorizados", () => {
-    // Servidor do Almoxarifado acessando Almoxarifado
-    const accessAlmox = AuthGuard.canAccessDepartment(municipalContext, "proj_sao_patricio", "dept_almoxarifado");
+  it("[Critério 03] Analista com atribuição específica só acessa seus departamentos autorizados", () => {
+    // Analista do Almoxarifado acessando Almoxarifado
+    const accessAlmox = AuthGuard.canAccessDepartment(analistaRestritoContext, "proj_sao_patricio", "dept_almoxarifado");
     expect(accessAlmox.allowed).toBe(true);
 
-    // Servidor do Almoxarifado tentando acessar Folha de Pagamento
-    const accessFolha = AuthGuard.canAccessDepartment(municipalContext, "proj_sao_patricio", "dept_folha");
+    // Analista do Almoxarifado tentando acessar Folha de Pagamento
+    const accessFolha = AuthGuard.canAccessDepartment(analistaRestritoContext, "proj_sao_patricio", "dept_folha");
     expect(accessFolha.allowed).toBe(false);
     expect(accessFolha.reason).toContain("Acesso restrito");
   });
 
-  it("[Critério 03] Representante Municipal e Leitor são ESTRITAMENTE VEDADOS de ver notas internas Centi", () => {
-    expect(AuthGuard.canViewInternalNotes(municipalContext)).toBe(false);
+  it("[Critério 03] Usuários com perfil LEITOR são VEDADOS de ver notas internas Centi", () => {
+    expect(AuthGuard.canViewInternalNotes(leitorContext)).toBe(false);
     expect(AuthGuard.canViewInternalNotes(analistaContext)).toBe(true);
     expect(AuthGuard.canViewInternalNotes(adminContext)).toBe(true);
   });

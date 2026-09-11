@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
+import { WeeklyPlanner } from "@/components/agenda/WeeklyPlanner";
+
 export default async function AgendaPage({
   searchParams,
 }: {
@@ -67,41 +69,6 @@ export default async function AgendaPage({
     }
   }
 
-  // Server Action: Criar Evento
-  async function createEventAction(formData: FormData) {
-    "use server";
-    const title = formData.get("title") as string;
-    const type = formData.get("type") as string;
-    const date = formData.get("date") as string;
-    const startTime = formData.get("startTime") as string;
-    const endTime = formData.get("endTime") as string;
-    const location = formData.get("location") as string;
-    const responsibleName = formData.get("responsibleName") as string;
-    const participants = formData.get("participants") as string;
-    const notes = formData.get("notes") as string;
-
-    if (!title || !date || !startTime || !endTime) return;
-
-    const startDateTime = new Date(`${date}T${startTime}:00`);
-    const endDateTime = new Date(`${date}T${endTime}:00`);
-
-    await prisma.agendaEvent.create({
-      data: {
-        projectId: project!.id,
-        title,
-        type: type || "REUNIAO_GOVERNANCA",
-        startDateTime,
-        endDateTime,
-        location: location || "Presencial / Gabinete",
-        responsibleName: responsibleName || "Líder de Implantação",
-        participants,
-        notes,
-      },
-    });
-
-    revalidatePath("/agenda");
-  }
-
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
@@ -111,51 +78,29 @@ export default async function AgendaPage({
             Agenda e Rituais Operacionais
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Projeto: <strong>{project.name}</strong>  |  Cronograma de reuniões, treinamentos, visitas e rituais diários
+            Projeto: <strong>{project.name}</strong> | Planejamento semanal, reuniões, treinamentos, visitas e rituais de campo
           </p>
         </div>
       </div>
 
-      {/* Rituais Diários Centi */}
-      <div className="space-y-2">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Rituais Obrigatórios de Campo (Centi NOP 001/2026)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
-              <Sunrise className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-900">08:00 - Alinhamento Matinal (Daily Centi)</div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Alinhamento interno de 15 min: metas prioritárias do dia, desbloqueio de acessos e mitigação de impedimentos.
-              </p>
-            </div>
+      {/* Rituais Diários de Campo (Compacto) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+        <div className="flex items-center gap-2 font-bold text-slate-700 text-xs">
+          <Clock className="w-4 h-4 text-emerald-700" />
+          <span>Rituais Diários de Campo:</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-200">
+            <Sunrise className="w-3.5 h-3.5 text-amber-600" />
+            <span><strong>08:00</strong> Daily Centi (Alinhamento)</span>
           </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700">
-              <Sun className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-900">12:00 - Checkpoint Intermediário</div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Verificação de entregas com os pontos focais da prefeitura. Desbloqueio de dados legados e assinaturas pendentes.
-              </p>
-            </div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200">
+            <Sun className="w-3.5 h-3.5 text-emerald-700" />
+            <span><strong>12:00</strong> Checkpoint (Prefeitura)</span>
           </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
-              <Sunset className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-900">17:00 - Fechamento & Diário de Campo</div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Consolidação dos testes realizados, registro formal no diário de campo e atualização do quadro de pendências.
-              </p>
-            </div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-900 border border-purple-200">
+            <Sunset className="w-3.5 h-3.5 text-purple-600" />
+            <span><strong>17:00</strong> Diário & Pendências</span>
           </div>
         </div>
       </div>
@@ -177,176 +122,12 @@ export default async function AgendaPage({
         </div>
       )}
 
-      {/* Grid: Calendário de Eventos & Agendamento */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Lista de Eventos Agendados */}
-        <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-centi-800" />
-              Eventos Programados
-            </span>
-            <span className="text-xs text-slate-500 font-normal">
-              {events.length} compromisso(s) registrados
-            </span>
-          </h2>
-
-          <div className="space-y-3">
-            {events.length === 0 ? (
-              <p className="text-xs text-slate-500 italic py-4 text-center">
-                Nenhum evento agendado para este projeto.
-              </p>
-            ) : (
-              events.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="p-3.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors space-y-2 bg-white"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-slate-900">{ev.title}</span>
-                        <StatusBadge status={ev.type} />
-                      </div>
-                      {ev.notes && <p className="text-xs text-slate-600 mt-0.5">{ev.notes}</p>}
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-slate-900">
-                        {new Date(ev.startDateTime).toLocaleDateString("pt-BR")}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      {new Date(ev.startDateTime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} às{" "}
-                      {new Date(ev.endDateTime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-
-                    {ev.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        {ev.location}
-                      </span>
-                    )}
-
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      Resp: {ev.responsibleName}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Form para Agendar Evento */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-            <Plus className="w-4 h-4 text-centi-800" />
-            Agendar Novo Evento
-          </h2>
-
-          <form action={createEventAction} className="space-y-3 text-xs">
-            <div>
-              <label className="block font-medium text-slate-700 mb-1">Título do Evento</label>
-              <input
-                type="text"
-                name="title"
-                required
-                placeholder="Ex: Treinamento Módulo Folha..."
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium text-slate-700 mb-1">Tipo de Evento</label>
-              <select name="type" className="w-full p-2 border border-slate-300 rounded-lg text-xs">
-                <option value="TREINAMENTO">Treinamento</option>
-                <option value="REUNIAO_GOVERNANCA">Reunião de Governança</option>
-                <option value="TESTE">Teste de Homologação / Autonomia</option>
-                <option value="VISITA_CAMPO">Visita de Campo</option>
-                <option value="RITUAL">Ritual Diário</option>
-                <option value="MARCO">Marco Contratual</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-medium text-slate-700 mb-1">Data</label>
-              <input
-                type="date"
-                name="date"
-                required
-                defaultValue={new Date().toISOString().split("T")[0]}
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Horário Início</label>
-                <input
-                  type="time"
-                  name="startTime"
-                  required
-                  defaultValue="09:00"
-                  className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-                />
-              </div>
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Horário Fim</label>
-                <input
-                  type="time"
-                  name="endTime"
-                  required
-                  defaultValue="11:00"
-                  className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-slate-700 mb-1">Local / Sala</label>
-              <input
-                type="text"
-                name="location"
-                defaultValue="Gabinete / Sala de Treinamentos"
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium text-slate-700 mb-1">Responsável Centi</label>
-              <input
-                type="text"
-                name="responsibleName"
-                defaultValue="Líder de Implantação"
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium text-slate-700 mb-1">Observações / Pauta</label>
-              <textarea
-                name="notes"
-                rows={2}
-                placeholder="Detalhes ou requisitos..."
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 bg-centi-800 hover:bg-centi-900 text-white rounded-lg font-bold shadow-xs"
-            >
-              Agendar no Calendário
-            </button>
-          </form>
-        </div>
-      </div>
+      {/* Planner Semanal Interativo (Colunas Segunda a Sexta-feira & Lista) */}
+      <WeeklyPlanner
+        projectId={project.id}
+        events={project.agendaEvents}
+        defaultResponsibleName={user?.name || "Líder de Implantação"}
+      />
     </div>
   );
 }
