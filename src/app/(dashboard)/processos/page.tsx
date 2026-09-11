@@ -131,8 +131,9 @@ export default async function ProcessosPage({
 
     if (!processId || !dependsOnId || processId === dependsOnId) return;
 
-    // Checa ciclo
-    const cycleCheck = dagValidator.wouldCreateCycle(processId, dependsOnId);
+    // Valida ciclo instanciando a classe diretamente na ação a partir das listas planas
+    const validator = new ProcessDagValidator(nodes, edges);
+    const cycleCheck = validator.wouldCreateCycle(processId, dependsOnId);
     if (cycleCheck.hasCycle) {
       throw new Error(`Dependência rejeitada: criaria ciclo direcionado: ${cycleCheck.cycleNames.join(" -> ")}`);
     }
@@ -234,7 +235,7 @@ export default async function ProcessosPage({
                     key={proc.id}
                     className={`p-3.5 rounded-lg border transition-all ${
                       isSelected
-                        ? "border-centi-600 bg-blue-50/40 ring-1 ring-centi-600"
+                        ? "border-centi-600 bg-emerald-50/40 ring-1 ring-centi-600"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
@@ -290,7 +291,7 @@ export default async function ProcessosPage({
                           <ul className="mt-1 space-y-0.5">
                             {proc.dependents.map((dep) => (
                               <li key={dep.id} className="text-slate-700 flex items-center gap-1">
-                                <ArrowRight className="w-3 h-3 text-blue-500" />
+                                <ArrowRight className="w-3 h-3 text-emerald-600" />
                                 <strong>{dep.process.name}</strong> ({dep.process.department.name})
                               </li>
                             ))}

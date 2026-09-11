@@ -135,7 +135,7 @@ export default async function AgendaPage({
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700">
               <Sun className="w-5 h-5" />
             </div>
             <div>

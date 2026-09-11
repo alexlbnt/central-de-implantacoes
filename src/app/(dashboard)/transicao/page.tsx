@@ -331,12 +331,12 @@ export default async function TransicaoPage({
             </p>
 
             {cycle?.bridgeStartedAt ? (
-              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-lg space-y-2">
-                <div className="flex items-center justify-between font-bold text-blue-900">
+              <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-lg space-y-2">
+                <div className="flex items-center justify-between font-bold text-emerald-950">
                   <span>Ciclo Bridge em Andamento</span>
                   <span>Iniciado em: {new Date(cycle.bridgeStartedAt).toLocaleDateString("pt-BR")}</span>
                 </div>
-                <div className="text-[11px] text-blue-800">
+                <div className="text-[11px] text-emerald-800">
                   Responsável CRM: <strong>{cycle.crmResponsible || "Não atribuído"}</strong> • Suporte N2: <strong>{cycle.serviceDeskLead || "Não atribuído"}</strong>
                 </div>
 

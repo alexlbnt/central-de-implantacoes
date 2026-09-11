@@ -312,7 +312,7 @@ export default async function MeetingDetailPage({
           <a
             href={`/api/exports/docx/${meeting.id}`}
             download
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors"
           >
             <Download className="w-4 h-4" />
             Baixar DOCX Oficial

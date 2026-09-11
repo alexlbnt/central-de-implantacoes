@@ -315,7 +315,7 @@ export default async function DocumentosPage({
           {/* Form para Registrar Tentativa de Formalização */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-              <Send className="w-4 h-4 text-blue-700" />
+              <Send className="w-4 h-4 text-emerald-700" />
               Registrar Formalização de Assinatura
             </h2>
 
@@ -373,7 +373,7 @@ export default async function DocumentosPage({
 
               <button
                 type="submit"
-                className="w-full py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-bold shadow-xs"
+                className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold shadow-xs"
               >
                 Salvar Registro de Envio
               </button>

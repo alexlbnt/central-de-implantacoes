@@ -129,7 +129,7 @@ export default async function ConfiguracoesPage({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-            <HardDrive className="w-4 h-4 text-blue-700" />
+            <HardDrive className="w-4 h-4 text-emerald-700" />
             Repositório de Arquivos
           </div>
           <div className="text-sm font-bold text-slate-900 mt-2">

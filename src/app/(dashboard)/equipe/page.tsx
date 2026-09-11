@@ -226,7 +226,7 @@ export default async function EquipePage({
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-blue-700" />
+              <Building2 className="w-5 h-5 text-emerald-700" />
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
                   Pontos Focais do Município ({project.municipality.name})
@@ -253,7 +253,7 @@ export default async function EquipePage({
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="font-bold text-xs text-slate-900">{p.name}</div>
-                      <div className="text-[11px] font-semibold text-blue-800">{p.roleTitle}</div>
+                      <div className="text-[11px] font-semibold text-emerald-800">{p.roleTitle}</div>
                     </div>
                   </div>
 
@@ -292,7 +292,7 @@ export default async function EquipePage({
           {/* Form para Cadastrar Ponto Focal Municipal */}
           <div className="pt-3 border-t border-slate-200">
             <h3 className="text-xs font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-              <Plus className="w-3.5 h-3.5 text-blue-700" />
+              <Plus className="w-3.5 h-3.5 text-emerald-700" />
               Cadastrar Ponto Focal Municipal
             </h3>
             <form action={createMunicipalPersonAction} className="space-y-2 text-xs">
@@ -347,7 +347,7 @@ export default async function EquipePage({
 
               <button
                 type="submit"
-                className="w-full py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-bold"
+                className="w-full py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold"
               >
                 Salvar Ponto Focal
               </button>

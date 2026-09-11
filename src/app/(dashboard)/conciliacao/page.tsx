@@ -172,7 +172,7 @@ export default async function ConciliacaoTK059Page({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Registro Manual Declarado</div>
-          <div className="text-2xl font-bold text-blue-700 mt-1">
+          <div className="text-2xl font-bold text-emerald-700 mt-1">
             {references.filter((r) => r.status === "REGISTRO_MANUAL_DECLARADO").length}
           </div>
         </div>
@@ -211,7 +211,7 @@ export default async function ConciliacaoTK059Page({
                     key={ref.id}
                     className={`p-3.5 rounded-lg border transition-all ${
                       isSelected
-                        ? "border-centi-600 bg-blue-50/40 ring-1 ring-centi-600"
+                        ? "border-centi-600 bg-emerald-50/40 ring-1 ring-centi-600"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
@@ -223,7 +223,7 @@ export default async function ConciliacaoTK059Page({
                             {ref.system}
                           </span>
                           {ref.destinationTab && (
-                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-50 text-blue-700">
+                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-700">
                               Aba: {ref.destinationTab}
                             </span>
                           )}
@@ -254,7 +254,7 @@ export default async function ConciliacaoTK059Page({
                           <input type="hidden" name="refId" value={ref.id} />
                           <button
                             type="submit"
-                            className="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded text-[11px] font-bold shadow-2xs"
+                            className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[11px] font-bold shadow-2xs"
                           >
                             Declarar Registro Efetuado
                           </button>

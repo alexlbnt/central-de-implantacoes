@@ -178,7 +178,7 @@ export default async function TreinamentosPage({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Servidores Mapeados</div>
-          <div className="text-2xl font-bold text-blue-700 mt-1">
+          <div className="text-2xl font-bold text-emerald-700 mt-1">
             {municipalPersons.length}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">Pontos focais no município</p>
@@ -208,7 +208,7 @@ export default async function TreinamentosPage({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-slate-900">{tr.subject}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
                           {tr.moduleCode}
                         </span>
                         <StatusBadge status={tr.status} />

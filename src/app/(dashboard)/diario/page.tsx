@@ -177,7 +177,7 @@ export default async function DiarioCampoPage({
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-xs text-slate-900">{entry.activity}</span>
                           {entry.department && (
-                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-50 text-blue-800">
+                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-800">
                               {entry.department.name}
                             </span>
                           )}

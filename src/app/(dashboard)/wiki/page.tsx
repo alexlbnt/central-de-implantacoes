@@ -131,7 +131,7 @@ export default async function WikiRegrasPage({
                             {rule.category}
                           </span>
                           {rule.departmentCode && (
-                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-50 text-blue-700">
+                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-700">
                               {rule.departmentCode}
                             </span>
                           )}
@@ -145,7 +145,7 @@ export default async function WikiRegrasPage({
                       <StatusBadge status={rule.status} />
                     </div>
 
-                    {/* Relato Verbal (Amarelo) vs Parecer Técnico (Azul) */}
+                    {/* Relato Verbal (Amarelo) vs Parecer Técnico (Verde) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       {/* Bloco 1: Relato Verbal */}
                       <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/80 space-y-1">
@@ -159,9 +159,9 @@ export default async function WikiRegrasPage({
                       </div>
 
                       {/* Bloco 2: Parecer Técnico Centi */}
-                      <div className="p-3 rounded-lg bg-blue-50/70 border border-blue-200/80 space-y-1">
-                        <div className="flex items-center gap-1.5 font-bold text-blue-900 text-[11px]">
-                          <Scale className="w-3.5 h-3.5 text-blue-700" />
+                      <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/80 space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-[11px]">
+                          <Scale className="w-3.5 h-3.5 text-emerald-700" />
                           Parecer Técnico Centi & Base Legal
                         </div>
                         {rule.technicalOpinion ? (
@@ -174,7 +174,7 @@ export default async function WikiRegrasPage({
                           </p>
                         )}
                         {rule.validatorName && (
-                          <div className="text-[10px] text-blue-700 pt-1 font-medium">
+                          <div className="text-[10px] text-emerald-700 pt-1 font-medium">
                             Homologado por: {rule.validatorName}
                           </div>
                         )}
@@ -267,14 +267,14 @@ export default async function WikiRegrasPage({
             </div>
 
             <div>
-              <label className="block font-medium text-blue-900 mb-1">
+              <label className="block font-medium text-emerald-950 mb-1">
                 Parecer Técnico Centi & Base Legal (Lei Municipal / Padrão Centi)
               </label>
               <textarea
                 name="technicalOpinion"
                 rows={3}
                 placeholder="Artigo da Lei, viabilidade no ERP, impacto em parametrização..."
-                className="w-full p-2 border border-blue-300 bg-blue-50/40 rounded-lg text-xs"
+                className="w-full p-2 border border-emerald-300 bg-emerald-50/40 rounded-lg text-xs"
               />
             </div>
 

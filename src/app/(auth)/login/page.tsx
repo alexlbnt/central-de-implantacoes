@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-100">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-centi-900 text-white shadow-md mb-4">
-          <Shield className="w-8 h-8 text-blue-300" />
+          <Shield className="w-8 h-8 text-emerald-300" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Central de Implantações

@@ -14,12 +14,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 interface HeaderProps {
   onMenuToggle: () => void;
+  onToggleCollapse?: () => void;
+  isCollapsed?: boolean;
   projects?: Array<{ id: string; name: string; isDemo: boolean }>;
   currentProjectId?: string;
 }
 
 export function Header({
   onMenuToggle,
+  onToggleCollapse,
+  isCollapsed = false,
   projects = [],
   currentProjectId,
 }: HeaderProps) {
@@ -39,8 +43,9 @@ export function Header({
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 shadow-sm">
-      {/* Botão de Menu Mobile e Seletor de Projeto */}
-      <div className="flex items-center gap-3">
+      {/* Botão de Menu Mobile/Desktop e Seletor de Projeto */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile menu trigger */}
         <button
           onClick={onMenuToggle}
           className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none"
@@ -48,6 +53,18 @@ export function Header({
         >
           <Menu className="w-5 h-5" />
         </button>
+
+        {/* Desktop sidebar collapse/expand trigger */}
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className="hidden lg:flex p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
+            title={isCollapsed ? "Expandir menu lateral (Ctrl+B)" : "Recolher menu lateral (Ctrl+B)"}
+            aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Seletor de Projeto Ativo */}
         <div className="flex items-center gap-2">

@@ -26,8 +26,8 @@ export function StatusBadge({
       case "OPERACAO_ASSISTIDA":
         return {
           label: "Operação Assistida",
-          bg: "bg-blue-50 border-blue-200 text-blue-800",
-          icon: <Clock className="w-3.5 h-3.5 text-blue-600" />,
+          bg: "bg-teal-50 border-teal-200 text-teal-800",
+          icon: <Clock className="w-3.5 h-3.5 text-teal-600" />,
         };
       case "EM_PREPARACAO":
         return {
