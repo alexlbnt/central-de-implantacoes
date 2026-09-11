@@ -114,4 +114,27 @@ export class AuthGuard {
       reason: "Acesso negado: Somente o Administrador Geral possui permissão para criar, editar ou excluir a estrutura de departamentos e instâncias setoriais.",
     };
   }
+
+  /**
+   * Verifica se o usuário tem permissão para criar, editar ou excluir membros da Equipe Técnica.
+   * Prerrogativa autorizada para o Administrador Geral (ADMIN_GERAL) e Líder do Projeto (LIDER_PROJETO).
+   */
+  public static canManageTechnicalTeam(
+    context: UserSessionContext,
+    projectId: string
+  ): ResourceAccessCheck {
+    if (context.role === UserRole.ADMIN_GERAL) {
+      return { allowed: true };
+    }
+
+    const member = context.projectMemberships.find((m) => m.projectId === projectId);
+    if (member?.role === UserRole.LIDER_PROJETO || context.role === UserRole.LIDER_PROJETO) {
+      return { allowed: true };
+    }
+
+    return {
+      allowed: false,
+      reason: "Acesso negado: Somente o Administrador Geral e o Líder de Implantação possuem permissão para gerenciar a Equipe Técnica.",
+    };
+  }
 }

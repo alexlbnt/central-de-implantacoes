@@ -15,6 +15,11 @@ import {
   UserCheck,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  TeamMemberAdminProvider,
+  AddTeamMemberButton,
+  TeamMemberItemActions,
+} from "@/components/team/TeamMemberAdminManager";
 
 export default async function EquipePage({
   searchParams,
@@ -56,6 +61,18 @@ export default async function EquipePage({
     return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado.</div>;
   }
 
+  const canManageTeam =
+    user?.role === "ADMIN_GERAL" ||
+    project.memberships.some((m) => m.userId === user?.id && m.role === "LIDER_PROJETO");
+
+  const projectDepartments = project.entities.flatMap((entity) =>
+    entity.departments.map((dept) => ({
+      id: dept.id,
+      name: dept.name,
+      entityName: entity.name,
+    }))
+  );
+
   // Busca pessoas municipais
   const municipalPersons = await prisma.person.findMany({
     where: { isMunicipal: true },
@@ -71,6 +88,16 @@ export default async function EquipePage({
     where: { isActive: true },
     orderBy: { name: "asc" },
   });
+
+  const existingMemberUserIds = new Set(project.memberships.map((m) => m.userId));
+  const availableUsers = allUsers
+    .filter((u) => !existingMemberUserIds.has(u.id))
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+    }));
 
   // Server Action: Cadastrar Contato Municipal
   async function createMunicipalPersonAction(formData: FormData) {
@@ -124,103 +151,105 @@ export default async function EquipePage({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Matriz de Equipe e Responsáveis
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Projeto: <strong>{project.name}</strong>  |  Articulação integrada entre corpo técnico Centi e equipe municipal
-          </p>
-        </div>
-      </div>
-
-      {/* Grid: Equipe Centi vs Equipe Municipal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Coluna 1: Equipe Centi Soluções */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+    <TeamMemberAdminProvider
+      projectId={project.id}
+      canManageTeam={canManageTeam}
+      availableUsers={availableUsers}
+      projectDepartments={projectDepartments}
+    >
+      <div className="space-y-6">
+        {/* Cabeçalho */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Matriz de Equipe e Responsáveis
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Projeto: <strong>{project.name}</strong>  |  Articulação integrada entre corpo técnico Centi e equipe municipal
+            </p>
+          </div>
+          {canManageTeam && (
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-centi-800" />
-              <div>
-                <h2 className="text-sm font-bold text-slate-900">Equipe Técnica Centi Soluções</h2>
-                <p className="text-[11px] text-slate-500">Líderes, Analistas, BAs e QA do projeto</p>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                Gestão da Equipe Habilitada
+              </span>
+              <AddTeamMemberButton />
+            </div>
+          )}
+        </div>
+
+        {/* Grid: Equipe Centi vs Equipe Municipal */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Coluna 1: Equipe Centi Soluções */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-700" />
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Equipe Técnica Centi Soluções</h2>
+                  <p className="text-[11px] text-slate-500">Líderes, Analistas, BAs e QA do projeto</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                  {project.memberships.length} membro(s)
+                </span>
+                <AddTeamMemberButton />
               </div>
             </div>
-            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-              {project.memberships.length} membro(s)
-            </span>
-          </div>
 
-          <div className="space-y-3">
-            {project.memberships.map((m) => (
-              <div
-                key={m.id}
-                className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors bg-slate-50/50 space-y-2"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="font-bold text-xs text-slate-900">{m.user.name}</div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                      <Mail className="w-3 h-3 text-slate-400" />
-                      {m.user.email}
+            <div className="space-y-3">
+              {project.memberships.map((m) => (
+                <div
+                  key={m.id}
+                  className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors bg-slate-50/50 space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">{m.user.name}</div>
+                      <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <Mail className="w-3 h-3 text-slate-400" />
+                        {m.user.email}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={m.role} />
+                      <TeamMemberItemActions
+                        member={{
+                          membershipId: m.id,
+                          userId: m.user.id,
+                          name: m.user.name,
+                          email: m.user.email,
+                          role: m.role,
+                          departmentIds: m.user.departmentAssignments
+                            .filter((a) => projectDepartments.some((d) => d.id === a.departmentId))
+                            .map((a) => a.departmentId),
+                        }}
+                      />
                     </div>
                   </div>
-                  <StatusBadge status={m.role} />
+
+                  {m.user.departmentAssignments.length > 0 && (
+                    <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-200">
+                      <span className="font-semibold">Departamentos: </span>
+                      {m.user.departmentAssignments
+                        .filter((a) => projectDepartments.some((d) => d.id === a.departmentId))
+                        .map((a) => a.department.name)
+                        .join(", ") || "Geral / Sem setor específico"}
+                    </div>
+                  )}
                 </div>
+              ))}
+            </div>
 
-                {m.user.departmentAssignments.length > 0 && (
-                  <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-200">
-                    <span className="font-semibold">Departamentos: </span>
-                    {m.user.departmentAssignments.map((a) => a.department.name).join(", ")}
-                  </div>
-                )}
+            {canManageTeam && (
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+                <span>Gestão da equipe liberada para Líder e Administrador Geral</span>
+                <AddTeamMemberButton />
               </div>
-            ))}
+            )}
           </div>
-
-          {/* Form para Vincular Membro Centi */}
-          <div className="pt-3 border-t border-slate-200">
-            <h3 className="text-xs font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-              <UserPlus className="w-3.5 h-3.5 text-centi-800" />
-              Alocar Usuário Centi no Projeto
-            </h3>
-            <form action={addProjectMemberAction} className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-              <div className="sm:col-span-2">
-                <select name="userId" required className="w-full p-2 border border-slate-300 rounded-lg text-xs">
-                  <option value="">Selecione o analista...</option>
-                  {allUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <select name="role" required className="w-full p-2 border border-slate-300 rounded-lg text-xs">
-                  <option value="LIDER_PROJETO">Líder de Projeto</option>
-                  <option value="ANALISTA">Analista</option>
-                  <option value="BA">Business Analyst</option>
-                  <option value="QA">QA / Homologador</option>
-                  <option value="CRM_BRIDGE">CRM Bridge</option>
-                  <option value="DC">Diretor de Contas (DC)</option>
-                </select>
-              </div>
-
-              <div className="sm:col-span-3">
-                <button
-                  type="submit"
-                  className="w-full py-1.5 bg-centi-800 hover:bg-centi-900 text-white rounded-lg text-xs font-bold"
-                >
-                  Confirmar Alocação
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
 
         {/* Coluna 2: Equipe Municipal (Pontos Focais) */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
@@ -356,5 +385,6 @@ export default async function EquipePage({
         </div>
       </div>
     </div>
+    </TeamMemberAdminProvider>
   );
 }
