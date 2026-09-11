@@ -230,8 +230,14 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Links de Navegação Agrupados */}
-        <div className={`flex-1 overflow-y-auto ${isCollapsed ? "px-2" : "px-3"} py-3 space-y-4`}>
+        {/* Links de Navegação Agrupados com rolagem suave e sem barra visual */}
+        <div
+          className={`flex-1 overflow-y-auto no-scrollbar ${isCollapsed ? "px-2" : "px-3"} py-3 space-y-4`}
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
           {NAVIGATION_GROUPS.map((group, groupIdx) => (
             <div key={group.title} className="space-y-1">
               {!isCollapsed ? (

@@ -24,3 +24,33 @@ textarea:focus-visible {
   outline: 2px solid #059669;
   outline-offset: 2px;
 }
+
+/* Utilitário para ocultar barra de rolagem mantendo a funcionalidade de rolagem ativa */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE e Edge legado */
+  scrollbar-width: none; /* Firefox e Chromium moderno */
+}
+
+/* Scrollbars discretas e elegantes para todo o sistema quando houver scroll */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
