@@ -258,7 +258,7 @@ export default async function EquipePage({
               <Building2 className="w-5 h-5 text-emerald-700" />
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
-                  Pontos Focais do Município ({project.municipality.name})
+                  Pontos Focais do Município ({project.municipality?.name || "Município"})
                 </h2>
                 <p className="text-[11px] text-slate-500">Contatos de referência e responsáveis pelos setores (sem login)</p>
               </div>

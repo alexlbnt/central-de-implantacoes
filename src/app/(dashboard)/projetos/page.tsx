@@ -192,7 +192,7 @@ export default async function ProjetosPage() {
                       {proj.name}
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      {proj.municipality.name} - {proj.municipality.state}  |  Prefixo: <span className="font-mono font-semibold">{proj.codePrefix}</span>
+                      {proj.municipality?.name || "Município"} - {proj.municipality?.state || "UF"}  |  Prefixo: <span className="font-mono font-semibold">{proj.codePrefix}</span>
                     </p>
                   </div>
 

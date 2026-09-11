@@ -138,7 +138,7 @@ export default async function DashboardOverviewPage({
             )}
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            <strong>{project.name}</strong> ({project.municipality.name} - {project.municipality.state}) &bull; Fase: <strong className="text-slate-700">{project.phase}</strong>
+            <strong>{project.name}</strong> ({project.municipality?.name || "Município"} - {project.municipality?.state || "UF"}) &bull; Fase: <strong className="text-slate-700">{project.phase}</strong>
           </p>
         </div>
 

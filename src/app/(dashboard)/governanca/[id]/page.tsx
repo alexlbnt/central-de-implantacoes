@@ -224,7 +224,7 @@ export default async function MeetingDetailPage({
       currentMeeting,
       {
         name: currentProj.name,
-        municipalityName: currentProj.municipality.name,
+        municipalityName: currentProj.municipality?.name || "Município",
       },
       {
         progressPercentage: progressPerc.percentage,

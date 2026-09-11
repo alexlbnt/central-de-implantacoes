@@ -101,7 +101,7 @@ export async function GET(
       meeting,
       {
         name: meeting.project.name,
-        municipalityName: meeting.project.municipality.name,
+        municipalityName: meeting.project.municipality?.name || "Município",
       },
       {
         progressPercentage: progressPerc.percentage,
