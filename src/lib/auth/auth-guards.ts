@@ -99,4 +99,19 @@ export class AuthGuard {
       reason: "A validação técnica formal de prontidão e homologação de processos é ato privativo do Líder do Projeto.",
     };
   }
+
+  /**
+   * Verifica se o usuário tem permissão para criar, editar ou excluir Departamentos e Instâncias Setoriais.
+   * Prerrogativa exclusiva do Administrador Geral (ADMIN_GERAL).
+   */
+  public static canManageDepartmentsAndEntities(context: UserSessionContext): ResourceAccessCheck {
+    if (context.role === UserRole.ADMIN_GERAL) {
+      return { allowed: true };
+    }
+
+    return {
+      allowed: false,
+      reason: "Acesso negado: Somente o Administrador Geral possui permissão para criar, editar ou excluir a estrutura de departamentos e instâncias setoriais.",
+    };
+  }
 }

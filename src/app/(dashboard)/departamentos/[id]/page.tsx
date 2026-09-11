@@ -17,6 +17,10 @@ import {
   UserCheck,
   AlertOctagon,
 } from "lucide-react";
+import {
+  DepartmentEntityAdminProvider,
+  DepartmentDetailAdminButtons,
+} from "@/components/departments/DepartmentEntityAdminManager";
 
 export default async function DepartmentDetailPage({
   params,
@@ -46,6 +50,7 @@ export default async function DepartmentDetailPage({
           autonomyReqs: { include: { person: true } },
         },
       },
+      modules: true,
       deliverables: true,
       issues: {
         where: { status: { notIn: ["CONCLUIDA", "CANCELADA"] } },
@@ -59,9 +64,31 @@ export default async function DepartmentDetailPage({
     notFound();
   }
 
+  const isAdmin = user?.role === "ADMIN_GERAL";
   const isLeader = dept.entity.project.memberships.some(
     (m) => m.userId === user?.id && m.role === "LIDER_PROJETO"
-  ) || user?.role === "ADMIN_GERAL";
+  ) || isAdmin;
+
+  const [moduleCatalog, persons, allEntities] = await Promise.all([
+    isAdmin
+      ? prisma.moduleCatalog.findMany({
+          select: { id: true, name: true, code: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+    isAdmin
+      ? prisma.person.findMany({
+          select: { id: true, name: true, roleTitle: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+    isAdmin
+      ? prisma.entity.findMany({
+          where: { projectId: dept.entity.projectId },
+          select: { id: true, name: true, type: true, identifier: true, notes: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
   // Server Action para registrar novo Processo Crítico
   async function addCriticalProcessAction(formData: FormData) {
@@ -232,34 +259,52 @@ export default async function DepartmentDetailPage({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Botão de Retorno e Cabeçalho */}
-      <div>
-        <Link
-          href="/departamentos"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 mb-2 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Voltar para Departamentos
-        </Link>
+    <DepartmentEntityAdminProvider
+      projectId={dept.entity.projectId}
+      isAdmin={isAdmin}
+      entities={allEntities}
+      moduleCatalog={moduleCatalog}
+      persons={persons}
+    >
+      <div className="space-y-6">
+        {/* Botão de Retorno e Cabeçalho */}
+        <div>
+          <Link
+            href="/departamentos"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 mb-2 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Voltar para Departamentos
+          </Link>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-          <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                {dept.name}
-              </h1>
-              <StatusBadge
-                status={dept.operationalStatus}
-                revalidationRequired={dept.revalidationRequired}
-              />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                  {dept.name}
+                </h1>
+                <StatusBadge
+                  status={dept.operationalStatus}
+                  revalidationRequired={dept.revalidationRequired}
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Entidade: <strong className="text-slate-700">{dept.entity.name}</strong>  |  Projeto: <strong className="text-slate-700">{dept.entity.project.name}</strong>
+              </p>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Entidade: <strong className="text-slate-700">{dept.entity.name}</strong>  |  Projeto: <strong className="text-slate-700">{dept.entity.project.name}</strong>
-            </p>
+
+            <DepartmentDetailAdminButtons
+              dept={{
+                id: dept.id,
+                entityId: dept.entityId,
+                name: dept.name,
+                criticality: dept.criticality,
+                municipalResponsibleId: dept.municipalResponsibleId,
+                moduleIds: dept.modules.map((m) => m.moduleId),
+              }}
+            />
           </div>
         </div>
-      </div>
 
       {/* Grid de 2 Colunas: Checklist dos 5 Critérios + Ações */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -554,5 +599,6 @@ export default async function DepartmentDetailPage({
         </div>
       </div>
     </div>
+    </DepartmentEntityAdminProvider>
   );
 }
