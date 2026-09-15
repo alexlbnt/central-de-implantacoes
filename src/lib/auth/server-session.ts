@@ -76,7 +76,14 @@ export async function getAuthorizedProjectId(requestedProjectId?: string): Promi
       orderBy: [{ isDemo: "asc" }, { createdAt: "asc" }],
       select: { id: true },
     });
-    return defaultProj?.id || null;
+    if (defaultProj) return defaultProj.id;
+
+    // Fallback defensivo para Admin caso o projeto tenha sido provisionado sem vínculo de org
+    const fallbackProj = await prisma.project.findFirst({
+      orderBy: [{ isDemo: "asc" }, { createdAt: "asc" }],
+      select: { id: true },
+    });
+    return fallbackProj?.id || null;
   }
 
   // Usuário restrito (Analista, BA, Líder, etc.)

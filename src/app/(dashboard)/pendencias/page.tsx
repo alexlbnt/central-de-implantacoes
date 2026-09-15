@@ -2,8 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { getCurrentUser, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
-import { recalculateDepartmentOperationalStatus } from "@/lib/domain/operational-status";
-import { revalidatePath } from "next/cache";
+import { createIssueAction } from "@/lib/actions/issue-actions";
+import { IssueStatusSelect } from "@/components/issues/IssueStatusSelect";
 import {
   CheckSquare,
   Plus,
@@ -21,133 +21,67 @@ export default async function PendenciasPage({
   searchParams?: Promise<{ projectId?: string; view?: string; filtro?: string }>;
 }) {
   const user = await getCurrentUser();
-  const params = await searchParams;
+  const params = searchParams ? await searchParams : undefined;
   const authorizedProjectId = await getAuthorizedProjectId(params?.projectId);
 
   if (!authorizedProjectId) {
     return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado ou acesso não autorizado.</div>;
   }
 
-  const project = await prisma.project.findUnique({
-    where: { id: authorizedProjectId },
-    include: {
-      entities: {
-        include: {
-          departments: true,
+  let project = null;
+  let issues: any[] = [];
+
+  try {
+    project = await prisma.project.findUnique({
+      where: { id: authorizedProjectId },
+      include: {
+        entities: {
+          include: {
+            departments: true,
+          },
         },
       },
-    },
-  });
+    });
+
+    if (project) {
+      issues = await prisma.issue.findMany({
+        where: {
+          projectId: project.id,
+          ...(params?.filtro === "bloqueios"
+            ? { isOperationalBlocker: true, status: { notIn: ["CONCLUIDA", "CANCELADA"] } }
+            : {}),
+          ...(params?.filtro === "vencidas"
+            ? { dueDate: { lt: new Date() }, status: { notIn: ["CONCLUIDA", "CANCELADA"] } }
+            : {}),
+          ...(params?.filtro === "aguardando_municipio"
+            ? { waitingCondition: "AGUARDANDO_MUNICIPIO" }
+            : {}),
+          // Restrição para usuários com perfil LEITOR: não veem notas e pendências estritamente internas Centi
+          ...(user?.role === "LEITOR" ? { isInternal: false } : {}),
+        },
+        include: {
+          department: true,
+          assignee: true,
+          author: true,
+        },
+        orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+      });
+    }
+  } catch (err) {
+    console.error("Erro ao carregar projeto ou pendências:", err);
+    return (
+      <div className="p-8 text-center text-slate-600">
+        Não foi possível carregar as pendências deste projeto no momento.
+      </div>
+    );
+  }
 
   if (!project) {
     return <div className="p-8 text-center text-slate-600">Nenhum projeto selecionado.</div>;
   }
 
-  // Busca pendências
-  const issues = await prisma.issue.findMany({
-    where: {
-      projectId: project.id,
-      ...(params?.filtro === "bloqueios"
-        ? { isOperationalBlocker: true, status: { notIn: ["CONCLUIDA", "CANCELADA"] } }
-        : {}),
-      ...(params?.filtro === "vencidas"
-        ? { dueDate: { lt: new Date() }, status: { notIn: ["CONCLUIDA", "CANCELADA"] } }
-        : {}),
-      ...(params?.filtro === "aguardando_municipio"
-        ? { waitingCondition: "AGUARDANDO_MUNICIPIO" }
-        : {}),
-      // Restrição para usuários com perfil LEITOR: não veem notas e pendências estritamente internas Centi
-      ...(user?.role === "LEITOR" ? { isInternal: false } : {}),
-    },
-    include: {
-      department: true,
-      assignee: true,
-      author: true,
-    },
-    orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-  });
-
   const isKanban = params?.view === "kanban";
-
-  // Server Action para Criar Pendência
-  async function createIssueAction(formData: FormData) {
-    "use server";
-    const title = (formData.get("title") as string)?.trim();
-    const description = (formData.get("description") as string)?.trim();
-    const departmentId = (formData.get("departmentId") as string) || null;
-    const priority = formData.get("priority") as "BAIXA" | "MEDIA" | "ALTA" | "CRITICA";
-    const type = formData.get("type") as any;
-    const isOperationalBlocker = formData.get("isOperationalBlocker") === "true";
-    const dueDateRaw = formData.get("dueDate") as string;
-    const nextAction = (formData.get("nextAction") as string) || null;
-
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("Não autenticado");
-    if (!title) return;
-
-    // Próximo número sequencial seguro (evita colisão de chave única @@unique([projectId, codeNumber]))
-    const lastIssue = await prisma.issue.findFirst({
-      where: { projectId: project!.id },
-      orderBy: { codeNumber: "desc" },
-      select: { codeNumber: true },
-    });
-    const codeNumber = (lastIssue?.codeNumber ?? 0) + 1;
-
-    const created = await prisma.issue.create({
-      data: {
-        projectId: project!.id,
-        codeNumber,
-        title,
-        description: description || title,
-        departmentId: departmentId === "" ? null : departmentId,
-        priority: priority || "MEDIA",
-        type: type || "DUVIDA",
-        isOperationalBlocker,
-        authorId: currentUser.id,
-        dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
-        nextAction,
-      },
-    });
-
-    // Se a pendência é um bloqueador operacional vinculado a um departamento, recalcula o status do setor
-    if (isOperationalBlocker && created.departmentId) {
-      await recalculateDepartmentOperationalStatus(created.departmentId);
-    }
-
-    revalidatePath("/pendencias");
-    revalidatePath("/departamentos");
-    revalidatePath("/");
-  }
-
-  // Server Action para Alternar Status da Pendência
-  async function updateStatusAction(formData: FormData) {
-    "use server";
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("Não autenticado");
-
-    const issueId = formData.get("issueId") as string;
-    const newStatus = formData.get("status") as any;
-
-    const updatedIssue = await prisma.issue.update({
-      where: { id: issueId },
-      data: {
-        status: newStatus,
-        resolvedAt: newStatus === "CONCLUIDA" ? new Date() : null,
-        resolvedBy: newStatus === "CONCLUIDA" ? currentUser.name : null,
-      },
-    });
-
-    // Se a pendência for ou era um bloqueador de setor, recalcula o status do departamento
-    if (updatedIssue.isOperationalBlocker && updatedIssue.departmentId) {
-      await recalculateDepartmentOperationalStatus(updatedIssue.departmentId);
-    }
-
-    revalidatePath("/pendencias");
-    revalidatePath("/departamentos");
-    revalidatePath("/");
-  }
-
-  const allDepts = project.entities.flatMap((e) => e.departments);
+  const allDepts = project.entities?.flatMap((e) => e.departments) || [];
 
   return (
     <div className="space-y-6">
@@ -205,6 +139,8 @@ export default async function PendenciasPage({
         </h2>
 
         <form action={createIssueAction} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
+          <input type="hidden" name="projectId" value={project.id} />
+
           <div className="lg:col-span-2">
             <label className="block font-medium text-slate-700 mb-1">Título da Pendência</label>
             <input
@@ -305,21 +241,13 @@ export default async function PendenciasPage({
                         {issue.department?.name || "Geral"}
                       </div>
 
-                      <form action={updateStatusAction} className="pt-2 border-t border-slate-100 flex gap-1">
-                        <input type="hidden" name="issueId" value={issue.id} />
-                        <select
-                          name="status"
-                          defaultValue={issue.status}
-                          onChange={(e) => e.target.form?.requestSubmit()}
+                      <div className="pt-2 border-t border-slate-100">
+                        <IssueStatusSelect
+                          issueId={issue.id}
+                          currentStatus={issue.status}
                           className="w-full text-[10px] p-1 border border-slate-200 rounded bg-slate-50"
-                        >
-                          <option value="ABERTA">Aberta</option>
-                          <option value="EM_ANALISE">Em Análise</option>
-                          <option value="EM_EXECUCAO">Em Execução</option>
-                          <option value="AGUARDANDO_VALIDACAO">Aguardando Validação</option>
-                          <option value="CONCLUIDA">Concluída</option>
-                        </select>
-                      </form>
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -375,21 +303,11 @@ export default async function PendenciasPage({
                     </td>
 
                     <td className="py-3 px-3">
-                      <form action={updateStatusAction}>
-                        <input type="hidden" name="issueId" value={issue.id} />
-                        <select
-                          name="status"
-                          defaultValue={issue.status}
-                          onChange={(e) => e.target.form?.requestSubmit()}
-                          className="text-xs p-1 border border-slate-300 rounded bg-white"
-                        >
-                          <option value="ABERTA">Aberta</option>
-                          <option value="EM_ANALISE">Em Análise</option>
-                          <option value="EM_EXECUCAO">Em Execução</option>
-                          <option value="AGUARDANDO_VALIDACAO">Aguardando Validação</option>
-                          <option value="CONCLUIDA">Concluída</option>
-                        </select>
-                      </form>
+                      <IssueStatusSelect
+                        issueId={issue.id}
+                        currentStatus={issue.status}
+                        className="text-xs p-1 border border-slate-300 rounded bg-white"
+                      />
                     </td>
 
                     <td className="py-3 px-3 font-mono text-slate-600">
