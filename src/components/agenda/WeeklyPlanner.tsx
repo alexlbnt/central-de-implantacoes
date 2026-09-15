@@ -17,12 +17,20 @@ import {
   AlertCircle,
   Briefcase,
   Sparkles,
+  Pencil,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   createAgendaEventAction,
   deleteAgendaEventAction,
+  updateAgendaEventAction,
 } from "@/lib/actions/agenda-actions";
+import {
+  formatEventTime,
+  formatEventDateKey,
+  formatEventDateDisplay,
+  getTodayDateKey,
+} from "@/lib/date-utils";
 
 export interface AgendaEventItem {
   id: string;
@@ -60,12 +68,15 @@ export function WeeklyPlanner({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Exclusão de evento
+  // Exclusão e edição de evento
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingEvent, setEditingEvent] = useState<AgendaEventItem | null>(null);
 
-  // Cálculo dos dias da semana (Segunda a Sexta) com base no weekOffset
+  // Cálculo dos dias da semana (Segunda a Sexta) com base no weekOffset e no fuso de Brasília
   const getMonday = (offset: number) => {
-    const today = new Date();
+    const todayKey = getTodayDateKey();
+    const [y, m, d] = todayKey.split("-").map(Number);
+    const today = new Date(y, m - 1, d);
     const day = today.getDay(); // 0 = Domingo, 1 = Segunda...
     const diff = today.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(today.getFullYear(), today.getMonth(), diff + offset * 7);
@@ -84,7 +95,7 @@ export function WeeklyPlanner({
     const day = String(d.getDate()).padStart(2, "0");
     const dateKey = `${year}-${month}-${day}`;
 
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = getTodayDateKey();
     const isToday = dateKey === todayStr;
 
     const dayNames = [
@@ -115,23 +126,33 @@ export function WeeklyPlanner({
     friday.getMonth() + 1
   ).padStart(2, "0")}/${friday.getFullYear()}`;
 
-  // Formata data local de um evento em YYYY-MM-DD
+  // Formata data local de um evento em YYYY-MM-DD no fuso oficial
   const getLocalDateKey = (dt: string | Date) => {
-    const date = new Date(dt);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+    return formatEventDateKey(dt);
+  };
+
+  // Formata horário local de um evento em HH:MM no fuso oficial
+  const formatTimeInput = (dt: string | Date) => {
+    return formatEventTime(dt);
   };
 
   // Abre modal para agendar em um dia específico
   const handleOpenAddForDay = (dateKey: string) => {
     setErrorMsg(null);
+    setEditingEvent(null);
     setSelectedDate(dateKey);
     setModalOpen(true);
   };
 
-  // Submissão do agendamento
+  // Abre modal para editar um evento existente
+  const handleOpenEdit = (ev: AgendaEventItem) => {
+    setErrorMsg(null);
+    setEditingEvent(ev);
+    setSelectedDate(formatEventDateKey(ev.startDateTime));
+    setModalOpen(true);
+  };
+
+  // Submissão do agendamento (criação ou edição)
   const handleSaveEvent = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -140,10 +161,16 @@ export function WeeklyPlanner({
 
     startTransition(async () => {
       try {
-        await createAgendaEventAction(formData);
+        if (editingEvent) {
+          formData.set("eventId", editingEvent.id);
+          await updateAgendaEventAction(formData);
+        } else {
+          await createAgendaEventAction(formData);
+        }
         setModalOpen(false);
+        setEditingEvent(null);
       } catch (err: any) {
-        setErrorMsg(err.message || "Erro ao agendar compromisso.");
+        setErrorMsg(err.message || "Erro ao salvar compromisso.");
       }
     });
   };
@@ -321,14 +348,8 @@ export function WeeklyPlanner({
                     </div>
                   ) : (
                     dayEvents.map((ev) => {
-                      const startTime = new Date(ev.startDateTime).toLocaleTimeString(
-                        "pt-BR",
-                        { hour: "2-digit", minute: "2-digit" }
-                      );
-                      const endTime = new Date(ev.endDateTime).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      });
+                      const startTime = formatEventTime(ev.startDateTime);
+                      const endTime = formatEventTime(ev.endDateTime);
 
                       return (
                         <div
@@ -369,8 +390,17 @@ export function WeeklyPlanner({
                             </p>
                           )}
 
-                          {/* Botão de Excluir */}
-                          <div className="pt-1 flex justify-end">
+                          {/* Botões de Ação */}
+                          <div className="pt-1 flex items-center justify-between border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(ev)}
+                              className="text-slate-400 hover:text-emerald-700 p-0.5 rounded transition-colors text-[10px] flex items-center gap-0.5 font-medium"
+                              title="Editar compromisso"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              <span>Editar</span>
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteEvent(ev.id)}
@@ -422,20 +452,12 @@ export function WeeklyPlanner({
                     <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
                       <span className="flex items-center gap-1 font-semibold text-slate-700">
                         <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
-                        {new Date(ev.startDateTime).toLocaleDateString("pt-BR")}
+                        {formatEventDateDisplay(ev.startDateTime)}
                       </span>
 
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        {new Date(ev.startDateTime).toLocaleTimeString("pt-BR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}{" "}
-                        às{" "}
-                        {new Date(ev.endDateTime).toLocaleTimeString("pt-BR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatEventTime(ev.startDateTime)} às {formatEventTime(ev.endDateTime)}
                       </span>
 
                       {ev.location && (
@@ -454,15 +476,25 @@ export function WeeklyPlanner({
                     {ev.notes && <p className="text-xs text-slate-600 italic">{ev.notes}</p>}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteEvent(ev.id)}
-                    disabled={deletingId === ev.id}
-                    className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors self-end sm:self-center"
-                    title="Excluir evento"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5 self-end sm:self-center">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(ev)}
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                      title="Editar compromisso"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteEvent(ev.id)}
+                      disabled={deletingId === ev.id}
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Excluir evento"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -478,27 +510,36 @@ export function WeeklyPlanner({
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                  <CalendarDays className="w-4 h-4" />
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  editingEvent ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                }`}>
+                  {editingEvent ? <Pencil className="w-4 h-4" /> : <CalendarDays className="w-4 h-4" />}
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">
-                    Agendar Compromisso no Planejamento
+                    {editingEvent ? "Editar Compromisso no Planejamento" : "Agendar Compromisso no Planejamento"}
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Treinamentos, testes, visitas ou reuniões
+                    {editingEvent ? "Atualize as informações, horários ou participantes" : "Treinamentos, testes, visitas ou reuniões"}
                   </p>
                 </div>
               </div>
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={() => {
+                  setModalOpen(false);
+                  setEditingEvent(null);
+                }}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEvent} className="space-y-3 text-xs">
+            <form
+              key={editingEvent ? editingEvent.id : (selectedDate || "new")}
+              onSubmit={handleSaveEvent}
+              className="space-y-3 text-xs"
+            >
               <div>
                 <label className="block font-semibold text-slate-800 mb-1">
                   Título do Compromisso *
@@ -507,6 +548,7 @@ export function WeeklyPlanner({
                   type="text"
                   name="title"
                   required
+                  defaultValue={editingEvent ? editingEvent.title : ""}
                   placeholder="Ex: Treinamento Módulo Folha..."
                   className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                 />
@@ -519,7 +561,7 @@ export function WeeklyPlanner({
                 <select
                   name="type"
                   required
-                  defaultValue="TREINAMENTO"
+                  defaultValue={editingEvent ? editingEvent.type : "TREINAMENTO"}
                   className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="TREINAMENTO">Treinamento Prático</option>
@@ -537,7 +579,11 @@ export function WeeklyPlanner({
                   type="date"
                   name="date"
                   required
-                  defaultValue={selectedDate || new Date().toISOString().split("T")[0]}
+                  defaultValue={
+                    editingEvent
+                      ? getLocalDateKey(editingEvent.startDateTime)
+                      : (selectedDate || getTodayDateKey())
+                  }
                   className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
@@ -551,7 +597,7 @@ export function WeeklyPlanner({
                     type="time"
                     name="startTime"
                     required
-                    defaultValue="09:00"
+                    defaultValue={editingEvent ? formatTimeInput(editingEvent.startDateTime) : "09:00"}
                     className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
@@ -563,7 +609,7 @@ export function WeeklyPlanner({
                     type="time"
                     name="endTime"
                     required
-                    defaultValue="12:00"
+                    defaultValue={editingEvent ? formatTimeInput(editingEvent.endDateTime) : "12:00"}
                     className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
@@ -578,7 +624,7 @@ export function WeeklyPlanner({
                     type="text"
                     name="responsibleName"
                     required
-                    defaultValue={defaultResponsibleName}
+                    defaultValue={editingEvent ? editingEvent.responsibleName : defaultResponsibleName}
                     className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
@@ -587,7 +633,7 @@ export function WeeklyPlanner({
                   <input
                     type="text"
                     name="location"
-                    defaultValue="Presencial / Gabinete"
+                    defaultValue={editingEvent ? (editingEvent.location ?? "") : "Presencial / Gabinete"}
                     placeholder="Sala de Reuniões, RH, Remoto..."
                     className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                   />
@@ -601,6 +647,7 @@ export function WeeklyPlanner({
                 <input
                   type="text"
                   name="participants"
+                  defaultValue={editingEvent ? (editingEvent.participants ?? "") : ""}
                   placeholder="Ex: Secretário, Diretor de RH, Operadores..."
                   className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                 />
@@ -611,6 +658,7 @@ export function WeeklyPlanner({
                 <textarea
                   name="notes"
                   rows={2}
+                  defaultValue={editingEvent ? (editingEvent.notes ?? "") : ""}
                   placeholder="Objetivos específicos do compromisso ou materiais necessários..."
                   className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none resize-none"
                 />
@@ -625,7 +673,10 @@ export function WeeklyPlanner({
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setModalOpen(false)}
+                  onClick={() => {
+                    setModalOpen(false);
+                    setEditingEvent(null);
+                  }}
                   disabled={isPending}
                   className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold transition-colors disabled:opacity-50"
                 >
@@ -636,7 +687,7 @@ export function WeeklyPlanner({
                   disabled={isPending}
                   className="px-4 py-2 rounded-lg bg-centi-900 hover:bg-centi-950 text-white font-bold transition-colors shadow-xs disabled:opacity-50"
                 >
-                  {isPending ? "Salvando..." : "Confirmar Agendamento"}
+                  {isPending ? "Salvando..." : (editingEvent ? "Salvar Alterações" : "Confirmar Agendamento")}
                 </button>
               </div>
             </form>

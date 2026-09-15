@@ -36,11 +36,17 @@ export function Header({
 }: HeaderProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [profileOpen, setProfileOpen] = useState(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
 
+  const urlProjectId = searchParams?.get("projectId");
+  const activeProjectId = urlProjectId || currentProjectId;
+
   const selectedProject =
-    projects.find((p) => p.id === currentProjectId) || projects[0];
+    projects.find((p) => p.id === activeProjectId) ||
+    projects.find((p) => p.id === currentProjectId) ||
+    projects[0];
 
   const handleSelectProject = (projectId: string) => {
     // Redireciona mantendo query param de projeto

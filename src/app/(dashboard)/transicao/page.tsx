@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getCurrentUserContext, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { revalidatePath } from "next/cache";
 import {
@@ -31,9 +31,14 @@ export default async function TransicaoPage({
 }) {
   const user = await getCurrentUser();
   const params = await searchParams;
+  const authorizedProjectId = await getAuthorizedProjectId(params?.projectId);
 
-  const project = await prisma.project.findFirst({
-    where: params?.projectId ? { id: params.projectId } : {},
+  if (!authorizedProjectId) {
+    return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado ou acesso não autorizado.</div>;
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: authorizedProjectId },
     include: {
       municipality: true,
       readiness: true,
@@ -78,20 +83,47 @@ export default async function TransicaoPage({
   // Server Action: Alternar Critério do Portão de Prontidão (Readiness)
   async function toggleReadinessCheckAction(formData: FormData) {
     "use server";
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    const isProjectLeader = currentContext.projectMemberships.some(
+      (m) => m.projectId === project!.id && m.role === "LIDER_PROJETO"
+    );
+    if (currentUser.role !== "ADMIN_GERAL" && !isProjectLeader) {
+      throw new Error("Apenas o Líder do Projeto ou Administrador Geral podem alterar critérios do portão de prontidão.");
+    }
+
     const field = formData.get("field") as string;
     const currentValue = formData.get("currentValue") === "true";
+
+    const ALLOWED_READINESS_FIELDS = [
+      "initialAccountingValidated",
+      "initialFinancialValidated",
+      "initialInventoryValidated",
+      "transparencyPortalWorking",
+      "pncpFirstTransmissionOk",
+      "wikiConsolidated",
+      "allAutonomyProven",
+      "leaderTechnicalVerdict",
+    ];
+
+    if (!ALLOWED_READINESS_FIELDS.includes(field)) {
+      throw new Error("Campo inválido no portão de prontidão.");
+    }
 
     await prisma.readinessAssessment.upsert({
       where: { projectId: project!.id },
       update: {
         [field]: !currentValue,
-        assessedBy: user?.name || "Líder de Implantação",
+        assessedBy: currentUser.name || "Líder de Implantação",
         assessedAt: new Date(),
       },
       create: {
         projectId: project!.id,
         [field]: !currentValue,
-        assessedBy: user?.name || "Líder de Implantação",
+        assessedBy: currentUser.name || "Líder de Implantação",
         assessedAt: new Date(),
       },
     });
@@ -102,8 +134,20 @@ export default async function TransicaoPage({
   // Server Action: Iniciar Ciclo Bridge (20 dias úteis de Operação Assistida)
   async function startBridgeCycleAction(formData: FormData) {
     "use server";
-    const crmResponsible = formData.get("crmResponsible") as string;
-    const serviceDeskLead = formData.get("serviceDeskLead") as string;
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    const isProjectLeader = currentContext.projectMemberships.some(
+      (m) => m.projectId === project!.id && m.role === "LIDER_PROJETO"
+    );
+    if (currentUser.role !== "ADMIN_GERAL" && !isProjectLeader) {
+      throw new Error("Apenas o Líder do Projeto ou Administrador Geral podem iniciar a fase de transição Bridge.");
+    }
+
+    const crmResponsible = (formData.get("crmResponsible") as string)?.trim();
+    const serviceDeskLead = (formData.get("serviceDeskLead") as string)?.trim();
 
     await prisma.transitionCycle.upsert({
       where: { projectId: project!.id },
@@ -132,6 +176,30 @@ export default async function TransicaoPage({
   // Server Action: Concluir Handover Definitivo
   async function completeHandoverAction() {
     "use server";
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    const isProjectLeader = currentContext.projectMemberships.some(
+      (m) => m.projectId === project!.id && m.role === "LIDER_PROJETO"
+    );
+    if (currentUser.role !== "ADMIN_GERAL" && !isProjectLeader) {
+      throw new Error("Apenas o Líder do Projeto ou Administrador Geral podem concluir o Handover definitivo.");
+    }
+
+    // Validação de bloqueadores ativos impeditivos
+    const activeBlockers = await prisma.issue.count({
+      where: {
+        projectId: project!.id,
+        isOperationalBlocker: true,
+        status: { notIn: ["CONCLUIDA", "CANCELADA"] },
+      },
+    });
+
+    if (activeBlockers > 0) {
+      throw new Error(`Não é possível concluir o Handover: existem ${activeBlockers} bloqueio(s) operacional(is) não resolvido(s).`);
+    }
 
     await prisma.transitionCycle.update({
       where: { projectId: project!.id },

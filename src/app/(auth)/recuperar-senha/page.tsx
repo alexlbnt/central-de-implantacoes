@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, KeyRound, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { requestPasswordResetAction } from "@/lib/actions/auth-actions";
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("");
@@ -16,11 +18,14 @@ export default function RecuperarSenhaPage() {
     setSuccessToken(null);
 
     try {
-      // Simulação funcional local de geração de token
-      const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      setSuccessToken(token);
-    } catch {
-      setError("Erro ao processar solicitação de recuperação.");
+      const res = await requestPasswordResetAction(email);
+      if (res.token) {
+        setSuccessToken(res.token);
+      } else {
+        setError(res.message);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Erro ao processar solicitação de recuperação.");
     } finally {
       setLoading(false);
     }
@@ -54,16 +59,23 @@ export default function RecuperarSenhaPage() {
                   <div className="mt-2 p-2 bg-white rounded border border-emerald-300 font-mono text-xs break-all select-all">
                     /redefinir-senha?token={successToken}
                   </div>
+                  <Link
+                    href={`/redefinir-senha?token=${successToken}`}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs transition-colors"
+                  >
+                    <span>Prosseguir para Redefinição</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               </div>
 
-              <a
+              <Link
                 href="/login"
                 className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar para o Login
-              </a>
+              </Link>
             </div>
           ) : (
             <form className="space-y-5" onSubmit={handleSubmit}>

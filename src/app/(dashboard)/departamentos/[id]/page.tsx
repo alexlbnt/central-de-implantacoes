@@ -1,10 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getCurrentUserContext } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { evaluateDepartmentOperationalStatus } from "@/lib/domain/operational-status";
+import { evaluateDepartmentOperationalStatus, recalculateDepartmentOperationalStatus } from "@/lib/domain/operational-status";
+import { AuthGuard } from "@/lib/auth/auth-guards";
 import { revalidatePath } from "next/cache";
 import {
   ArrowLeft,
@@ -28,6 +29,7 @@ export default async function DepartmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const user = await getCurrentUser();
+  const context = await getCurrentUserContext();
   const { id } = await params;
 
   const dept = await prisma.department.findUnique({
@@ -64,6 +66,26 @@ export default async function DepartmentDetailPage({
     notFound();
   }
 
+  // Verificação estrita de IDOR e acesso setorial (Critério 03)
+  if (context) {
+    const accessCheck = AuthGuard.canAccessDepartment(context, dept.entity.projectId, dept.id);
+    if (!accessCheck.allowed) {
+      return (
+        <div className="text-center py-12 bg-white rounded-xl border border-red-200 p-8">
+          <h2 className="text-lg font-bold text-red-700">Acesso Restrito ao Departamento</h2>
+          <p className="text-sm text-slate-600 mt-2">{accessCheck.reason}</p>
+          <Link
+            href="/departamentos"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium"
+          >
+            Voltar para Departamentos
+          </Link>
+        </div>
+      );
+    }
+  }
+
+  const projectId = dept.entity.projectId;
   const isAdmin = user?.role === "ADMIN_GERAL";
   const isLeader = dept.entity.project.memberships.some(
     (m) => m.userId === user?.id && m.role === "LIDER_PROJETO"
@@ -84,7 +106,7 @@ export default async function DepartmentDetailPage({
       : Promise.resolve([]),
     isAdmin
       ? prisma.entity.findMany({
-          where: { projectId: dept.entity.projectId },
+          where: { projectId: projectId },
           select: { id: true, name: true, type: true, identifier: true, notes: true },
         })
       : Promise.resolve([]),
@@ -93,16 +115,28 @@ export default async function DepartmentDetailPage({
   // Server Action para registrar novo Processo Crítico
   async function addCriticalProcessAction(formData: FormData) {
     "use server";
-    const name = formData.get("name") as string;
-    const objective = formData.get("objective") as string;
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    const deptAccess = AuthGuard.canAccessDepartment(currentContext, projectId, id);
+    if (!deptAccess.allowed) throw new Error(deptAccess.reason || "Acesso negado");
+
+    const name = (formData.get("name") as string)?.trim();
+    const objective = (formData.get("objective") as string)?.trim();
+
+    if (!name) return;
 
     await prisma.criticalProcess.create({
       data: {
         departmentId: id,
         name,
-        objective,
+        objective: objective || null,
       },
     });
+
+    await recalculateDepartmentOperationalStatus(id);
 
     revalidatePath(`/departamentos/${id}`);
     revalidatePath("/departamentos");
@@ -112,15 +146,23 @@ export default async function DepartmentDetailPage({
   // Server Action para registrar Teste Funcional / Autônomo
   async function recordTestAction(formData: FormData) {
     "use server";
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    const deptAccess = AuthGuard.canAccessDepartment(currentContext, projectId, id);
+    if (!deptAccess.allowed) throw new Error(deptAccess.reason || "Acesso negado");
+
     const processId = formData.get("processId") as string;
-    const executorName = formData.get("executorName") as string;
-    const evaluatorName = formData.get("evaluatorName") as string;
+    const executorName = (formData.get("executorName") as string)?.trim() || currentUser.name;
+    const evaluatorName = (formData.get("evaluatorName") as string)?.trim() || currentUser.name;
     const modality = formData.get("modality") as "ASSISTIDA" | "AUTONOMA";
     const result = formData.get("result") as "APROVADO" | "REPROVADO";
-    const observedResult = formData.get("observedResult") as string;
+    const observedResult = (formData.get("observedResult") as string)?.trim() || "Teste executado.";
     const personId = formData.get("personId") as string | null;
 
-    const testExec = await prisma.testExecution.create({
+    await prisma.testExecution.create({
       data: {
         processId,
         executorName,
@@ -139,75 +181,27 @@ export default async function DepartmentDetailPage({
       });
     }
 
-    // Recalcula o status operacional do departamento
-    const updatedDept = await prisma.department.findUnique({
-      where: { id },
-      include: {
-        criticalProcesses: {
-          include: {
-            testExecutions: { orderBy: { executedAt: "desc" }, take: 1 },
-            autonomyReqs: { include: { person: true } },
-          },
-        },
-        issues: { where: { isOperationalBlocker: true, status: { notIn: ["CONCLUIDA", "CANCELADA"] } } },
-      },
-    });
-
-    if (updatedDept) {
-      const evalResult = evaluateDepartmentOperationalStatus({
-        hasDiagnosis: !!updatedDept.lastDiagnosisAt,
-        lastDiagnosisAt: updatedDept.lastDiagnosisAt,
-        isDataMigrationValidated: updatedDept.isDataMigrationValidated,
-        isParametrizationValidated: updatedDept.isParametrizationValidated,
-        isTrainingCompleted: updatedDept.isTrainingCompleted,
-        isLeaderValidated: updatedDept.isLeaderValidated,
-        criticalProcesses: updatedDept.criticalProcesses.map((p) => ({
-          id: p.id,
-          name: p.name,
-          evidenceRequired: p.evidenceRequired,
-          latestTest: p.testExecutions[0] ? {
-            id: p.testExecutions[0].id,
-            result: p.testExecutions[0].result,
-            executedAt: p.testExecutions[0].executedAt,
-            modality: p.testExecutions[0].modality,
-          } : null,
-        })),
-        autonomyRequirements: updatedDept.criticalProcesses.flatMap((p) =>
-          p.autonomyReqs.map((a) => ({
-            id: a.id,
-            processId: a.processId,
-            personId: a.personId,
-            isApproved: a.isApproved,
-          }))
-        ),
-        activeBlockers: updatedDept.issues.map((i) => ({
-          id: i.id,
-          codeNumber: i.codeNumber,
-          title: i.title,
-          criticalProcessId: i.criticalProcessId,
-        })),
-      });
-
-      await prisma.department.update({
-        where: { id },
-        data: {
-          operationalStatus: evalResult.status,
-          revalidationRequired: evalResult.revalidationRequired,
-          revalidationReason: evalResult.revalidationReasons.join("; ") || null,
-        },
-      });
-    }
+    // Recalcula o status operacional do departamento de forma atômica e centralizada
+    await recalculateDepartmentOperationalStatus(id);
 
     revalidatePath(`/departamentos/${id}`);
     revalidatePath("/departamentos");
     revalidatePath("/");
   }
 
-  // Server Action para Validação Técnica do Líder
+  // Server Action para Validação Técnica do Líder (Prerrogativa exclusiva do Líder do Projeto)
   async function validateLeaderAction(formData: FormData) {
     "use server";
     const currentUser = await getCurrentUser();
     if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    // Validação estrita de autorização: somente Líder de Implantação designado no projeto
+    const readinessCheck = AuthGuard.canValidateReadiness(currentContext, projectId);
+    if (!readinessCheck.allowed) {
+      throw new Error(readinessCheck.reason || "Somente o Líder de Implantação do projeto possui prerrogativa para validar a prontidão.");
+    }
 
     await prisma.department.update({
       where: { id },
@@ -222,7 +216,7 @@ export default async function DepartmentDetailPage({
     await prisma.auditLog.create({
       data: {
         organizationId: currentUser.organizationId,
-        projectId: dept?.entity.projectId,
+        projectId: projectId,
         actorId: currentUser.id,
         actorName: currentUser.name,
         action: "VALIDATE",
@@ -232,6 +226,9 @@ export default async function DepartmentDetailPage({
       },
     });
 
+    // Recalcula o status operacional para promover a OPERACIONAL se todos os critérios cumulativos forem atendidos
+    await recalculateDepartmentOperationalStatus(id);
+
     revalidatePath(`/departamentos/${id}`);
     revalidatePath("/departamentos");
     revalidatePath("/");
@@ -240,8 +237,31 @@ export default async function DepartmentDetailPage({
   // Server Action para Alternar Critérios Prévios (Migração, Parametrização, Treinamento)
   async function toggleCriterionAction(formData: FormData) {
     "use server";
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+    const currentContext = await getCurrentUserContext();
+    if (!currentContext) throw new Error("Sessão inválida");
+
+    const isProjectLeader = currentContext.projectMemberships.some(
+      (m) => m.projectId === projectId && m.role === "LIDER_PROJETO"
+    );
+    if (currentUser.role !== "ADMIN_GERAL" && !isProjectLeader) {
+      throw new Error("Apenas o Administrador Geral ou o Líder do Projeto podem alterar critérios de homologação.");
+    }
+
     const field = formData.get("field") as string;
     const value = formData.get("value") === "true";
+
+    // Whitelist estrita contra mass assignment
+    const ALLOWED_FIELDS = [
+      "isDataMigrationValidated",
+      "isParametrizationValidated",
+      "isTrainingCompleted",
+    ];
+
+    if (!ALLOWED_FIELDS.includes(field)) {
+      throw new Error("Campo inválido para atualização de critério operacional.");
+    }
 
     const updateData: Record<string, unknown> = { [field]: value };
     if (field === "isDataMigrationValidated") updateData.dataMigrationValidatedAt = value ? new Date() : null;
@@ -252,6 +272,9 @@ export default async function DepartmentDetailPage({
       where: { id },
       data: updateData,
     });
+
+    // Recalcula o status operacional do departamento imediatamente
+    await recalculateDepartmentOperationalStatus(id);
 
     revalidatePath(`/departamentos/${id}`);
     revalidatePath("/departamentos");
@@ -317,7 +340,7 @@ export default async function DepartmentDetailPage({
               Checklist Cumulativo de Prontidão Operacional
             </h2>
             <p className="text-xs text-slate-500 mb-4">
-              Para atingir o estado "Operacional", todos os 5 critérios abaixo precisam estar atestados simultaneamente.
+              Para atingir o estado &quot;Operacional&quot;, todos os 5 critérios abaixo precisam estar atestados simultaneamente.
             </p>
 
             <div className="space-y-3 text-xs">

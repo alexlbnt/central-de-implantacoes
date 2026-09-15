@@ -15,7 +15,9 @@ vi.mock("@/lib/auth/server-session", () => ({
 import {
   createAgendaEventAction,
   deleteAgendaEventAction,
+  updateAgendaEventAction,
 } from "../../src/lib/actions/agenda-actions";
+import { formatEventTime, formatEventDateKey } from "../../src/lib/date-utils";
 
 describe("Planner Semanal e Agenda Operacional", () => {
   let orgId: string;
@@ -285,6 +287,9 @@ describe("Planner Semanal e Agenda Operacional", () => {
         expect(created?.type).toBe("TREINAMENTO");
         expect(created?.location).toBe("Sala de Informática RH");
         expect(created?.responsibleName).toBe("Especialista em Folha Centi");
+        expect(formatEventTime(created!.startDateTime)).toBe("14:00");
+        expect(formatEventTime(created!.endDateTime)).toBe("17:00");
+        expect(formatEventDateKey(created!.startDateTime)).toBe("2026-09-15");
       }
     });
 
@@ -314,6 +319,125 @@ describe("Planner Semanal e Agenda Operacional", () => {
         where: { id: created.id },
       });
       expect(check).toBeNull();
+    });
+
+    it("impede edição sem autenticação prévia", async () => {
+      mockCurrentUser = null;
+      const formData = new FormData();
+      formData.set("eventId", "fake-id");
+      formData.set("title", "Tentativa Sem Auth");
+      formData.set("date", "2026-09-15");
+      formData.set("startTime", "10:00");
+      formData.set("endTime", "11:00");
+
+      await expect(updateAgendaEventAction(formData)).rejects.toThrow("Não autenticado");
+    });
+
+    it("impede edição de evento inexistente", async () => {
+      mockCurrentUser = testUser;
+      const formData = new FormData();
+      formData.set("eventId", "evento-inexistente-12345");
+      formData.set("title", "Edição Fantasma");
+      formData.set("date", "2026-09-15");
+      formData.set("startTime", "10:00");
+      formData.set("endTime", "11:00");
+
+      await expect(updateAgendaEventAction(formData)).rejects.toThrow("Evento não encontrado");
+    });
+
+    it("edita um compromisso existente com sucesso", async () => {
+      mockCurrentUser = testUser;
+
+      // Cria compromisso base
+      const initial = await prisma.agendaEvent.create({
+        data: {
+          projectId,
+          title: "Compromisso Original",
+          type: "REUNIAO_GOVERNANCA",
+          startDateTime: new Date("2026-09-17T10:00:00"),
+          endDateTime: new Date("2026-09-17T11:00:00"),
+          location: "Gabinete",
+          responsibleName: "Líder de Implantação",
+        },
+      });
+      createdEventIds.push(initial.id);
+
+      // Prepara formulário com novos dados
+      const updateForm = new FormData();
+      updateForm.set("eventId", initial.id);
+      updateForm.set("title", "Compromisso Atualizado com Sucesso");
+      updateForm.set("type", "VISITA_CAMPO");
+      updateForm.set("date", "2026-09-17");
+      updateForm.set("startTime", "14:30");
+      updateForm.set("endTime", "16:00");
+      updateForm.set("location", "Secretaria de Finanças");
+      updateForm.set("responsibleName", "Especialista Centi");
+      updateForm.set("participants", "Secretário e Coordenador");
+      updateForm.set("notes", "Verificação presencial dos módulos.");
+
+      const result = await updateAgendaEventAction(updateForm);
+      expect(result.success).toBe(true);
+      expect(result.eventId).toBe(initial.id);
+
+      const updated = await prisma.agendaEvent.findUnique({
+        where: { id: initial.id },
+      });
+
+      expect(updated?.title).toBe("Compromisso Atualizado com Sucesso");
+      expect(updated?.type).toBe("VISITA_CAMPO");
+      expect(updated?.location).toBe("Secretaria de Finanças");
+      expect(updated?.responsibleName).toBe("Especialista Centi");
+      expect(updated?.participants).toBe("Secretário e Coordenador");
+      expect(updated?.notes).toBe("Verificação presencial dos módulos.");
+      expect(formatEventTime(updated!.startDateTime)).toBe("14:30");
+      expect(formatEventTime(updated!.endDateTime)).toBe("16:00");
+      expect(formatEventDateKey(updated!.startDateTime)).toBe("2026-09-17");
+    });
+
+    it("garante persistência determinística de horários e datas no fuso horário oficial (America/Sao_Paulo)", async () => {
+      mockCurrentUser = testUser;
+
+      // Cadastro de evento matutino
+      const morningForm = new FormData();
+      morningForm.set("projectId", projectId);
+      morningForm.set("title", "Alinhamento Matutino");
+      morningForm.set("type", "RITUAL");
+      morningForm.set("date", "2026-09-18");
+      morningForm.set("startTime", "08:15");
+      morningForm.set("endTime", "09:00");
+      morningForm.set("location", "Remoto");
+
+      const morningResult = await createAgendaEventAction(morningForm);
+      expect(morningResult.success).toBe(true);
+      createdEventIds.push(morningResult.eventId!);
+
+      const morningEvent = await prisma.agendaEvent.findUnique({
+        where: { id: morningResult.eventId },
+      });
+      expect(formatEventTime(morningEvent!.startDateTime)).toBe("08:15");
+      expect(formatEventTime(morningEvent!.endDateTime)).toBe("09:00");
+      expect(formatEventDateKey(morningEvent!.startDateTime)).toBe("2026-09-18");
+
+      // Cadastro de evento noturno que cruza meia-noite em UTC
+      const nightForm = new FormData();
+      nightForm.set("projectId", projectId);
+      nightForm.set("title", "Plantão Noturno de Fechamento");
+      nightForm.set("type", "MARCO");
+      nightForm.set("date", "2026-09-18");
+      nightForm.set("startTime", "22:00");
+      nightForm.set("endTime", "23:45");
+      nightForm.set("location", "CPD Central");
+
+      const nightResult = await createAgendaEventAction(nightForm);
+      expect(nightResult.success).toBe(true);
+      createdEventIds.push(nightResult.eventId!);
+
+      const nightEvent = await prisma.agendaEvent.findUnique({
+        where: { id: nightResult.eventId },
+      });
+      expect(formatEventTime(nightEvent!.startDateTime)).toBe("22:00");
+      expect(formatEventTime(nightEvent!.endDateTime)).toBe("23:45");
+      expect(formatEventDateKey(nightEvent!.startDateTime)).toBe("2026-09-18");
     });
   });
 });

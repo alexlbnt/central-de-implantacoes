@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import {
   Users,
@@ -28,11 +28,16 @@ export default async function EquipePage({
 }) {
   const user = await getCurrentUser();
   const params = await searchParams;
+  const authorizedProjectId = await getAuthorizedProjectId(params?.projectId);
+
+  if (!authorizedProjectId) {
+    return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado ou acesso não autorizado.</div>;
+  }
 
   let project = null;
   try {
-    project = await prisma.project.findFirst({
-      where: params?.projectId ? { id: params.projectId } : {},
+    project = await prisma.project.findUnique({
+      where: { id: authorizedProjectId },
       include: {
         municipality: true,
         memberships: {
@@ -78,11 +83,20 @@ export default async function EquipePage({
     }))
   );
 
-  // Busca pessoas municipais com tratamento defensivo
+  // Busca contatos municipais vinculados estritamente aos setores deste município (Isolamento Multitenant)
   let municipalPersons: any[] = [];
   try {
+    const projectDeptIds = projectDepartments.map((d) => d.id);
     municipalPersons = await prisma.person.findMany({
-      where: { isMunicipal: true },
+      where: {
+        isMunicipal: true,
+        OR: [
+          { responsibleDepartments: { some: { id: { in: projectDeptIds } } } },
+          { substituteDepartments: { some: { id: { in: projectDeptIds } } } },
+          { keyUserDepartments: { some: { id: { in: projectDeptIds } } } },
+          { trainingAttendances: { some: { training: { projectId: project.id } } } },
+        ],
+      },
       include: {
         responsibleDepartments: true,
         substituteDepartments: true,

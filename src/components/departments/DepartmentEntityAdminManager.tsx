@@ -53,6 +53,7 @@ export interface PersonOption {
 }
 
 interface DepartmentAdminContextType {
+  isAdmin: boolean;
   openNewEntityModal: () => void;
   openEditEntityModal: (entity: EntityItem) => void;
   openDeleteEntityModal: (entity: EntityItem) => void;
@@ -236,6 +237,7 @@ export function DepartmentEntityAdminProvider({
   return (
     <DepartmentAdminContext.Provider
       value={{
+        isAdmin,
         openNewEntityModal,
         openEditEntityModal,
         openDeleteEntityModal,
@@ -572,7 +574,7 @@ export function DepartmentEntityAdminProvider({
 
 export function AdminTopActions() {
   const admin = useDepartmentAdmin();
-  if (!admin) return null;
+  if (!admin || !admin.isAdmin) return null;
 
   return (
     <div className="flex items-center gap-2.5 flex-wrap">
@@ -602,7 +604,7 @@ export function AdminTopActions() {
 
 export function EntityAdminMenu({ entity }: { entity: EntityItem }) {
   const admin = useDepartmentAdmin();
-  if (!admin) return null;
+  if (!admin || !admin.isAdmin) return null;
 
   return (
     <div className="flex items-center gap-1">
@@ -633,7 +635,7 @@ export function EntityAdminMenu({ entity }: { entity: EntityItem }) {
 
 export function DepartmentAdminMenu({ dept }: { dept: DepartmentItem }) {
   const admin = useDepartmentAdmin();
-  if (!admin) return null;
+  if (!admin || !admin.isAdmin) return null;
 
   return (
     <div className="flex items-center gap-1">
@@ -657,7 +659,7 @@ export function DepartmentAdminMenu({ dept }: { dept: DepartmentItem }) {
 
 export function DepartmentDetailAdminButtons({ dept }: { dept: DepartmentItem }) {
   const admin = useDepartmentAdmin();
-  if (!admin) return null;
+  if (!admin || !admin.isAdmin) return null;
 
   return (
     <div className="flex items-center gap-2">

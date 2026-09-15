@@ -47,7 +47,9 @@ export default async function ProjetosPage() {
     const isDemo = formData.get("isDemo") === "true";
 
     const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("Não autenticado");
+    if (!currentUser || currentUser.role !== "ADMIN_GERAL") {
+      throw new Error("Apenas o Administrador Geral pode cadastrar novos projetos.");
+    }
 
     // Upsert do município
     const mun = await prisma.municipality.upsert({

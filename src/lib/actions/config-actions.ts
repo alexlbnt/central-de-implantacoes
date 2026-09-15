@@ -3,7 +3,8 @@
 import prisma from "@/lib/db/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getCurrentUserContext } from "@/lib/auth/server-session";
+import { AuthGuard } from "@/lib/auth/auth-guards";
 import { UserRole } from "@prisma/client";
 
 /**
@@ -11,7 +12,8 @@ import { UserRole } from "@prisma/client";
  */
 export async function addHolidayAction(formData: FormData) {
   const currentUser = await getCurrentUser();
-  if (!currentUser) {
+  const context = await getCurrentUserContext();
+  if (!currentUser || !context) {
     throw new Error("Não autenticado.");
   }
 
@@ -21,6 +23,18 @@ export async function addHolidayAction(formData: FormData) {
 
   if (!projectId || !dateRaw || !description) {
     throw new Error("Preencha todos os campos obrigatórios do feriado.");
+  }
+
+  const access = AuthGuard.canAccessProject(context, projectId);
+  if (!access.allowed) {
+    throw new Error(access.reason || "Acesso negado a este projeto.");
+  }
+
+  const isProjectLeader = context.projectMemberships.some(
+    (m) => m.projectId === projectId && m.role === UserRole.LIDER_PROJETO
+  );
+  if (currentUser.role !== UserRole.ADMIN_GERAL && !isProjectLeader) {
+    throw new Error("Apenas o Administrador Geral ou o Líder do Projeto podem cadastrar feriados municipais.");
   }
 
   const project = await prisma.project.findUnique({

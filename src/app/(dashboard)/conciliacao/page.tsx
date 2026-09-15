@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { revalidatePath } from "next/cache";
 import {
@@ -25,12 +25,21 @@ export default async function ConciliacaoTK059Page({
 }) {
   const user = await getCurrentUser();
   const params = await searchParams;
+  const authorizedProjectId = await getAuthorizedProjectId(params?.projectId);
 
-  const project = await prisma.project.findFirst({
-    where: params?.projectId ? { id: params.projectId } : {},
+  if (!authorizedProjectId) {
+    return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado ou acesso não autorizado.</div>;
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: authorizedProjectId },
     include: {
       municipality: true,
       officialRefs: {
+        include: {
+          document: true,
+          issues: true,
+        },
         orderBy: { updatedAt: "desc" },
       },
     },
@@ -40,15 +49,17 @@ export default async function ConciliacaoTK059Page({
     return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado.</div>;
   }
 
-  // Prepara itens avaliando divergência de versão
+  // Prepara itens avaliando divergência de versão real
   const references = project.officialRefs.map((ref) => {
+    const currentLocalVersion = ref.document?.currentVersion || (ref.issues?.[0]?.version ?? ref.localVersionCovered);
     const evaluatedStatus = evaluateReconciliationStatus(
       ref.status as any,
-      ref.localVersionCovered,
+      currentLocalVersion,
       ref.localVersionCovered
     );
     return {
       ...ref,
+      currentLocalVersion,
       evaluatedStatus,
     };
   });
@@ -65,7 +76,7 @@ export default async function ConciliacaoTK059Page({
         system: selectedRef.system as any,
         destinationTab: (selectedRef.destinationTab as any) || "Observacao",
         identifier: selectedRef.identifier,
-        currentLocalVersion: selectedRef.localVersionCovered,
+        currentLocalVersion: selectedRef.currentLocalVersion,
         coveredLocalVersion: selectedRef.localVersionCovered,
         status: selectedRef.evaluatedStatus as any,
         summaryText: `Status de Implantação e Homologação registrado na Central Centi.\nIdentificador: ${selectedRef.identifier}\nÚltima verificação: ${selectedRef.lastCheckedAt ? new Date(selectedRef.lastCheckedAt).toLocaleDateString("pt-BR") : "Pendente"}\nResponsável: ${selectedRef.checkedBy || "Líder de Implantação"}`,

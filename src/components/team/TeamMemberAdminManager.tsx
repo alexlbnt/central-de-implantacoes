@@ -271,7 +271,7 @@ export function TeamMemberAdminProvider({
                   </label>
                   {availableUsers.length === 0 ? (
                     <p className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px]">
-                      Todos os usuários cadastrados da Centi já estão alocados neste projeto. Utilize a aba "Cadastrar Novo Usuário Centi".
+                      Todos os usuários cadastrados da Centi já estão alocados neste projeto. Utilize a aba &quot;Cadastrar Novo Usuário Centi&quot;.
                     </p>
                   ) : (
                     <select

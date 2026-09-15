@@ -1,4 +1,5 @@
 import { DepartmentStatus } from "@prisma/client";
+import prisma from "@/lib/db/prisma";
 
 export interface CriticalProcessData {
   id: string;
@@ -245,3 +246,82 @@ export function evaluateDepartmentOperationalStatus(
     autonomyTotalCount: totalAutonomy,
   };
 }
+
+/**
+ * Recalcula e persiste de forma atômica e reativa o status operacional de um departamento,
+ * considerando processos críticos, execuções de testes, requisitos de autonomia,
+ * critérios prévios e impedimentos operacionais ativos.
+ */
+export async function recalculateDepartmentOperationalStatus(
+  departmentId: string,
+  tx?: any
+): Promise<DepartmentEvaluationResult | null> {
+  const db = tx || prisma;
+  const dept = await db.department.findUnique({
+    where: { id: departmentId },
+    include: {
+      criticalProcesses: {
+        include: {
+          testExecutions: { orderBy: { executedAt: "desc" }, take: 1 },
+          autonomyReqs: { include: { person: true } },
+        },
+      },
+      issues: {
+        where: {
+          isOperationalBlocker: true,
+          status: { notIn: ["CONCLUIDA", "CANCELADA"] },
+        },
+      },
+    },
+  });
+
+  if (!dept) return null;
+
+  const evalResult = evaluateDepartmentOperationalStatus({
+    hasDiagnosis: !!dept.lastDiagnosisAt,
+    lastDiagnosisAt: dept.lastDiagnosisAt,
+    isDataMigrationValidated: dept.isDataMigrationValidated,
+    isParametrizationValidated: dept.isParametrizationValidated,
+    isTrainingCompleted: dept.isTrainingCompleted,
+    isLeaderValidated: dept.isLeaderValidated,
+    criticalProcesses: dept.criticalProcesses.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      evidenceRequired: p.evidenceRequired,
+      latestTest: p.testExecutions[0]
+        ? {
+            id: p.testExecutions[0].id,
+            result: p.testExecutions[0].result,
+            executedAt: p.testExecutions[0].executedAt,
+            modality: p.testExecutions[0].modality,
+          }
+        : null,
+    })),
+    autonomyRequirements: dept.criticalProcesses.flatMap((p: any) =>
+      p.autonomyReqs.map((a: any) => ({
+        id: a.id,
+        processId: a.processId,
+        personId: a.personId,
+        isApproved: a.isApproved,
+      }))
+    ),
+    activeBlockers: dept.issues.map((i: any) => ({
+      id: i.id,
+      codeNumber: i.codeNumber,
+      title: i.title,
+      criticalProcessId: i.criticalProcessId,
+    })),
+  });
+
+  await db.department.update({
+    where: { id: departmentId },
+    data: {
+      operationalStatus: evalResult.status,
+      revalidationRequired: evalResult.revalidationRequired,
+      revalidationReason: evalResult.revalidationReasons.join("; ") || null,
+    },
+  });
+
+  return evalResult;
+}
+

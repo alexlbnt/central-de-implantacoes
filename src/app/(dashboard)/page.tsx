@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -31,10 +31,26 @@ export default async function DashboardOverviewPage({
 }) {
   const user = await getCurrentUser();
   const params = await searchParams;
+  const authorizedProjectId = await getAuthorizedProjectId(params?.projectId);
 
-  // Busca projeto ativo
-  const project = await prisma.project.findFirst({
-    where: params?.projectId ? { id: params.projectId } : {},
+  if (!authorizedProjectId) {
+    return (
+      <div className="text-center py-12 bg-white rounded-xl border border-slate-200 p-8">
+        <h2 className="text-lg font-bold text-slate-800">Nenhum projeto atribuído ou acesso não autorizado</h2>
+        <p className="text-sm text-slate-600 mt-2">Você não possui membresia autorizada neste projeto ou nenhum município está cadastrado.</p>
+        <Link
+          href="/projetos"
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-centi-900 text-white rounded-lg text-sm font-medium"
+        >
+          Ir para Projetos
+        </Link>
+      </div>
+    );
+  }
+
+  // Busca projeto ativo com isolamento seguro (IDOR)
+  const project = await prisma.project.findUnique({
+    where: { id: authorizedProjectId },
     include: {
       municipality: true,
       entities: {

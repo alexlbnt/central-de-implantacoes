@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./auth-options";
 import prisma from "../db/prisma";
 import { UserRole } from "@prisma/client";
-import { UserSessionContext } from "./auth-guards";
+import { UserSessionContext, AuthGuard } from "./auth-guards";
 
 export async function getCurrentUser() {
   try {
@@ -52,3 +52,43 @@ export async function getCurrentUserContext(): Promise<UserSessionContext | null
     })),
   };
 }
+
+/**
+ * Retorna de forma segura e com proteção contra IDOR o projectId autorizado para o usuário atual.
+ * Se o usuário for ADMIN_GERAL, permite acessar qualquer projeto da sua organização.
+ * Se for analista ou outro perfil restrito, valida a membresia via AuthGuard. Em caso de acesso
+ * indevido, faz o fallback estrito para o primeiro projeto onde possui membresia válida.
+ */
+export async function getAuthorizedProjectId(requestedProjectId?: string): Promise<string | null> {
+  const context = await getCurrentUserContext();
+  if (!context) return null;
+
+  if (context.role === UserRole.ADMIN_GERAL) {
+    if (requestedProjectId) {
+      const p = await prisma.project.findFirst({
+        where: { id: requestedProjectId, organizationId: context.organizationId },
+        select: { id: true },
+      });
+      if (p) return p.id;
+    }
+    const defaultProj = await prisma.project.findFirst({
+      where: { organizationId: context.organizationId },
+      orderBy: [{ isDemo: "asc" }, { createdAt: "asc" }],
+      select: { id: true },
+    });
+    return defaultProj?.id || null;
+  }
+
+  // Usuário restrito (Analista, BA, Líder, etc.)
+  if (requestedProjectId) {
+    const access = AuthGuard.canAccessProject(context, requestedProjectId);
+    if (access.allowed) {
+      return requestedProjectId;
+    }
+  }
+
+  // Fallback seguro: primeiro projeto onde o usuário possui membresia autorizada
+  const firstMembership = context.projectMemberships[0];
+  return firstMembership ? firstMembership.projectId : null;
+}
+

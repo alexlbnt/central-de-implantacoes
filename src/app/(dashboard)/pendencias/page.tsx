@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/server-session";
+import { getCurrentUser, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
+import { recalculateDepartmentOperationalStatus } from "@/lib/domain/operational-status";
 import { revalidatePath } from "next/cache";
 import {
   CheckSquare,
@@ -21,9 +22,14 @@ export default async function PendenciasPage({
 }) {
   const user = await getCurrentUser();
   const params = await searchParams;
+  const authorizedProjectId = await getAuthorizedProjectId(params?.projectId);
 
-  const project = await prisma.project.findFirst({
-    where: params?.projectId ? { id: params.projectId } : {},
+  if (!authorizedProjectId) {
+    return <div className="p-8 text-center text-slate-600">Nenhum projeto encontrado ou acesso não autorizado.</div>;
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: authorizedProjectId },
     include: {
       entities: {
         include: {
@@ -66,8 +72,8 @@ export default async function PendenciasPage({
   // Server Action para Criar Pendência
   async function createIssueAction(formData: FormData) {
     "use server";
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
+    const title = (formData.get("title") as string)?.trim();
+    const description = (formData.get("description") as string)?.trim();
     const departmentId = (formData.get("departmentId") as string) || null;
     const priority = formData.get("priority") as "BAIXA" | "MEDIA" | "ALTA" | "CRITICA";
     const type = formData.get("type") as any;
@@ -77,19 +83,24 @@ export default async function PendenciasPage({
 
     const currentUser = await getCurrentUser();
     if (!currentUser) throw new Error("Não autenticado");
+    if (!title) return;
 
-    // Próximo número sequencial
-    const count = await prisma.issue.count({ where: { projectId: project!.id } });
-    const codeNumber = count + 1;
+    // Próximo número sequencial seguro (evita colisão de chave única @@unique([projectId, codeNumber]))
+    const lastIssue = await prisma.issue.findFirst({
+      where: { projectId: project!.id },
+      orderBy: { codeNumber: "desc" },
+      select: { codeNumber: true },
+    });
+    const codeNumber = (lastIssue?.codeNumber ?? 0) + 1;
 
-    await prisma.issue.create({
+    const created = await prisma.issue.create({
       data: {
         projectId: project!.id,
         codeNumber,
         title,
-        description,
+        description: description || title,
         departmentId: departmentId === "" ? null : departmentId,
-        priority,
+        priority: priority || "MEDIA",
         type: type || "DUVIDA",
         isOperationalBlocker,
         authorId: currentUser.id,
@@ -98,25 +109,41 @@ export default async function PendenciasPage({
       },
     });
 
+    // Se a pendência é um bloqueador operacional vinculado a um departamento, recalcula o status do setor
+    if (isOperationalBlocker && created.departmentId) {
+      await recalculateDepartmentOperationalStatus(created.departmentId);
+    }
+
     revalidatePath("/pendencias");
+    revalidatePath("/departamentos");
     revalidatePath("/");
   }
 
   // Server Action para Alternar Status da Pendência
   async function updateStatusAction(formData: FormData) {
     "use server";
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Não autenticado");
+
     const issueId = formData.get("issueId") as string;
     const newStatus = formData.get("status") as any;
 
-    await prisma.issue.update({
+    const updatedIssue = await prisma.issue.update({
       where: { id: issueId },
       data: {
         status: newStatus,
         resolvedAt: newStatus === "CONCLUIDA" ? new Date() : null,
+        resolvedBy: newStatus === "CONCLUIDA" ? currentUser.name : null,
       },
     });
 
+    // Se a pendência for ou era um bloqueador de setor, recalcula o status do departamento
+    if (updatedIssue.isOperationalBlocker && updatedIssue.departmentId) {
+      await recalculateDepartmentOperationalStatus(updatedIssue.departmentId);
+    }
+
     revalidatePath("/pendencias");
+    revalidatePath("/departamentos");
     revalidatePath("/");
   }
 
