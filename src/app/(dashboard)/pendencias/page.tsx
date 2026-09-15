@@ -3,14 +3,10 @@ import Link from "next/link";
 import { getCurrentUser, getAuthorizedProjectId } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { createIssueAction } from "@/lib/actions/issue-actions";
-import { IssueStatusSelect } from "@/components/issues/IssueStatusSelect";
+import { IssuesViewManager } from "@/components/issues/IssuesViewManager";
 import {
-  CheckSquare,
   Plus,
-  AlertOctagon,
-  Clock,
   Download,
-  Filter,
   Kanban,
   List,
 } from "lucide-react";
@@ -38,6 +34,13 @@ export default async function PendenciasPage({
         entities: {
           include: {
             departments: true,
+          },
+        },
+        memberships: {
+          include: {
+            user: {
+              select: { id: true, name: true, role: true },
+            },
           },
         },
       },
@@ -83,6 +86,18 @@ export default async function PendenciasPage({
   const isKanban = params?.view === "kanban";
   const allDepts = project.entities?.flatMap((e) => e.departments) || [];
 
+  const departments = allDepts.map((d) => ({
+    id: d.id,
+    name: d.name,
+  }));
+
+  const teamMembers =
+    project.memberships?.map((m) => ({
+      id: m.user.id,
+      name: m.user.name,
+      role: m.user.role,
+    })) || [];
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
@@ -92,7 +107,7 @@ export default async function PendenciasPage({
             Pendências e Ações de Campo
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Projeto: <strong>{project.name}</strong>  |  Gestão unificada em Lista e Kanban.
+            Projeto: <strong>{project.name}</strong>  |  Gestão unificada em Lista e Kanban com edição completa.
           </p>
         </div>
 
@@ -201,136 +216,18 @@ export default async function PendenciasPage({
         </form>
       </div>
 
-      {/* Visualização em Lista ou Kanban */}
-      {isKanban ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {(["ABERTA", "EM_ANALISE", "EM_EXECUCAO", "AGUARDANDO_VALIDACAO", "CONCLUIDA"] as const).map((colStatus) => {
-            const colIssues = issues.filter((i) => i.status === colStatus);
-
-            return (
-              <div key={colStatus} className="bg-slate-100/80 rounded-xl p-3 border border-slate-200">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
-                  <span className="text-xs font-bold text-slate-700">{colStatus}</span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white text-slate-600">
-                    {colIssues.length}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {colIssues.map((issue) => (
-                    <div
-                      key={issue.id}
-                      className={`p-3 rounded-lg bg-white border shadow-xs text-xs space-y-1.5 ${
-                        issue.isOperationalBlocker ? "border-red-300 bg-red-50/30" : "border-slate-200"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-mono text-[10px] text-slate-500">
-                        <span>{project.codePrefix}-{String(issue.codeNumber).padStart(3, "0")}</span>
-                        {issue.isOperationalBlocker && (
-                          <span className="text-red-700 font-bold flex items-center gap-0.5">
-                            <AlertOctagon className="w-3 h-3" /> BLOQUEIO
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="font-semibold text-slate-900 line-clamp-2">
-                        {issue.title}
-                      </div>
-
-                      <div className="text-[11px] text-slate-500">
-                        {issue.department?.name || "Geral"}
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-100">
-                        <IssueStatusSelect
-                          issueId={issue.id}
-                          currentStatus={issue.status}
-                          className="w-full text-[10px] p-1 border border-slate-200 rounded bg-slate-50"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                  <th className="py-2.5 px-3">Código / Título</th>
-                  <th className="py-2.5 px-3">Departamento</th>
-                  <th className="py-2.5 px-3">Prioridade</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3">Prazo Fatal</th>
-                  <th className="py-2.5 px-3">Espera</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {issues.map((issue) => (
-                  <tr key={issue.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500">
-                        <span>{project.codePrefix}-{String(issue.codeNumber).padStart(3, "0")}</span>
-                        {issue.isOperationalBlocker && (
-                          <span className="text-red-700 font-bold px-1.5 py-0.2 rounded bg-red-100 text-[10px]">
-                            BLOQUEIO
-                          </span>
-                        )}
-                      </div>
-                      <div className="font-semibold text-slate-900 mt-0.5">{issue.title}</div>
-                    </td>
-
-                    <td className="py-3 px-3 text-slate-600">
-                      {issue.department?.name || "Geral do Projeto"}
-                    </td>
-
-                    <td className="py-3 px-3 font-semibold">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] ${
-                          issue.priority === "CRITICA"
-                            ? "bg-red-100 text-red-800"
-                            : issue.priority === "ALTA"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {issue.priority}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <IssueStatusSelect
-                        issueId={issue.id}
-                        currentStatus={issue.status}
-                        className="text-xs p-1 border border-slate-300 rounded bg-white"
-                      />
-                    </td>
-
-                    <td className="py-3 px-3 font-mono text-slate-600">
-                      {issue.dueDate ? issue.dueDate.toLocaleDateString("pt-BR") : "A definir"}
-                    </td>
-
-                    <td className="py-3 px-3 text-[11px]">
-                      {issue.waitingCondition !== "NENHUMA" ? (
-                        <span className="inline-flex items-center gap-1 text-amber-800 font-medium px-2 py-0.5 rounded bg-amber-50 border border-amber-200">
-                          <Clock className="w-3 h-3 text-amber-600" />
-                          {issue.waitingCondition}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">Ativa</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* Visualização Gerenciada: Lista e Kanban com Edição Completa */}
+      <IssuesViewManager
+        project={{
+          id: project.id,
+          name: project.name,
+          codePrefix: project.codePrefix,
+        }}
+        issues={issues}
+        departments={departments}
+        teamMembers={teamMembers}
+        isKanban={isKanban}
+      />
     </div>
   );
 }

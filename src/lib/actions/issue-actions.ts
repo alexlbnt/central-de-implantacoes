@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { recalculateDepartmentOperationalStatus } from "@/lib/domain/operational-status";
-import { IssuePriority, IssueStatus, IssueType } from "@prisma/client";
+import { IssuePriority, IssueStatus, IssueType, WaitingCondition } from "@prisma/client";
 
 /**
  * Cria uma nova pendência ou ação de campo.
  */
-export async function createIssueAction(formData: FormData) {
+export async function createIssueAction(formData: FormData): Promise<void> {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
     throw new Error("Não autenticado: Faça login para registrar pendências.");
@@ -34,7 +34,10 @@ export async function createIssueAction(formData: FormData) {
 
   // Verifica pertencimento do projeto à organização do usuário
   const project = await prisma.project.findFirst({
-    where: { id: projectId, ...(currentUser.role === "ADMIN_GERAL" ? {} : { organizationId: currentUser.organizationId }) },
+    where: {
+      id: projectId,
+      ...(currentUser.role === "ADMIN_GERAL" ? {} : { organizationId: currentUser.organizationId }),
+    },
   });
   if (!project) {
     throw new Error("Projeto não encontrado ou acesso não autorizado.");
@@ -98,16 +101,16 @@ export async function createIssueAction(formData: FormData) {
 }
 
 /**
- * Atualiza o status de uma pendência (ex: ABERTA -> EM_EXECUCAO -> CONCLUIDA).
+ * Atualiza o status rápido de uma pendência (ex: ABERTA -> EM_EXECUCAO -> CONCLUIDA).
  */
-export async function updateIssueStatusAction(formData: FormData) {
+export async function updateIssueStatusAction(formData: FormData): Promise<void> {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
     throw new Error("Não autenticado: Faça login para atualizar pendências.");
   }
 
   const issueId = (formData.get("issueId") as string)?.trim();
-  const newStatus = (formData.get("status") as IssueStatus);
+  const newStatus = formData.get("status") as IssueStatus;
 
   if (!issueId || !newStatus) {
     throw new Error("Identificador da pendência e novo status são obrigatórios.");
@@ -148,6 +151,199 @@ export async function updateIssueStatusAction(formData: FormData) {
   if (updatedIssue.isOperationalBlocker && updatedIssue.departmentId) {
     await recalculateDepartmentOperationalStatus(updatedIssue.departmentId);
   }
+
+  revalidatePath("/pendencias");
+  revalidatePath("/departamentos");
+  revalidatePath("/");
+}
+
+/**
+ * Atualiza todos os dados cadastrais de uma pendência (edição completa).
+ */
+export async function updateIssueAction(formData: FormData): Promise<void> {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error("Não autenticado: Faça login para editar pendências.");
+  }
+
+  const issueId = (formData.get("issueId") as string)?.trim();
+  const title = (formData.get("title") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim();
+  const departmentIdRaw = (formData.get("departmentId") as string)?.trim();
+  const priorityRaw = formData.get("priority") as IssuePriority;
+  const typeRaw = formData.get("type") as IssueType;
+  const statusRaw = formData.get("status") as IssueStatus;
+  const isOperationalBlocker = formData.get("isOperationalBlocker") === "true";
+  const dueDateRaw = (formData.get("dueDate") as string)?.trim();
+  const nextAction = (formData.get("nextAction") as string)?.trim() || null;
+  const waitingConditionRaw = formData.get("waitingCondition") as WaitingCondition;
+  const waitingReason = (formData.get("waitingReason") as string)?.trim() || null;
+  const assigneeIdRaw = (formData.get("assigneeId") as string)?.trim();
+
+  if (!issueId) {
+    throw new Error("Identificador da pendência é obrigatório.");
+  }
+  if (!title) {
+    throw new Error("O título da pendência é obrigatório.");
+  }
+
+  const existing = await prisma.issue.findUnique({
+    where: { id: issueId },
+    include: { project: true },
+  });
+
+  if (!existing) {
+    throw new Error("Pendência não encontrada.");
+  }
+
+  // Verificação IDOR de acesso à organização
+  if (currentUser.role !== "ADMIN_GERAL" && existing.project.organizationId !== currentUser.organizationId) {
+    throw new Error("Acesso não autorizado para editar esta pendência.");
+  }
+
+  const departmentId =
+    departmentIdRaw && departmentIdRaw !== "" && departmentIdRaw !== "none" ? departmentIdRaw : null;
+  const assigneeId =
+    assigneeIdRaw && assigneeIdRaw !== "" && assigneeIdRaw !== "none" ? assigneeIdRaw : null;
+
+  // Valida departamento se informado
+  if (departmentId) {
+    const dept = await prisma.department.findFirst({
+      where: {
+        id: departmentId,
+        entity: { projectId: existing.projectId },
+      },
+    });
+    if (!dept) {
+      throw new Error("O departamento selecionado não pertence a este município.");
+    }
+  }
+
+  const priority = priorityRaw || existing.priority;
+  const type = typeRaw || existing.type;
+  const status = statusRaw || existing.status;
+  const isResolved = status === IssueStatus.CONCLUIDA;
+  const waitingCondition = waitingConditionRaw || existing.waitingCondition;
+
+  const updated = await prisma.issue.update({
+    where: { id: issueId },
+    data: {
+      title,
+      description: description || title,
+      departmentId,
+      priority,
+      type,
+      status,
+      isOperationalBlocker,
+      assigneeId,
+      dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
+      nextAction,
+      waitingCondition,
+      waitingReason,
+      resolvedAt: isResolved ? existing.resolvedAt || new Date() : null,
+      resolvedBy: isResolved ? existing.resolvedBy || currentUser.name : null,
+      version: { increment: 1 },
+    },
+  });
+
+  // Histórico de status caso tenha mudado
+  if (existing.status !== status) {
+    await prisma.issueStatusHistory.create({
+      data: {
+        issueId,
+        fromStatus: existing.status,
+        toStatus: status,
+        changedBy: currentUser.name,
+        note: "Status atualizado via edição completa de pendência",
+      },
+    });
+  }
+
+  // Recálculo do status operacional do departamento
+  // 1. Se o departamento mudou e o anterior tinha bloqueador ativo
+  if (existing.departmentId && existing.departmentId !== departmentId && existing.isOperationalBlocker) {
+    await recalculateDepartmentOperationalStatus(existing.departmentId);
+  }
+  // 2. Se o novo departamento tem bloqueador ou o flag mudou
+  if (departmentId && (isOperationalBlocker || existing.isOperationalBlocker)) {
+    await recalculateDepartmentOperationalStatus(departmentId);
+  }
+
+  // Auditoria
+  await prisma.auditLog.create({
+    data: {
+      organizationId: currentUser.organizationId,
+      projectId: existing.projectId,
+      actorId: currentUser.id,
+      actorName: currentUser.name,
+      action: "UPDATE",
+      targetType: "Issue",
+      targetId: updated.id,
+      changedFields: JSON.stringify({
+        title,
+        priority,
+        status,
+        departmentId,
+        isOperationalBlocker,
+        waitingCondition,
+      }),
+      justification: "Edição de dados cadastrais da pendência",
+    },
+  });
+
+  revalidatePath("/pendencias");
+  revalidatePath("/departamentos");
+  revalidatePath("/");
+}
+
+/**
+ * Exclui uma pendência cadastrada.
+ */
+export async function deleteIssueAction(formData: FormData): Promise<void> {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error("Não autenticado: Faça login para excluir pendências.");
+  }
+
+  const issueId = (formData.get("issueId") as string)?.trim();
+  if (!issueId) {
+    throw new Error("Identificador da pendência é obrigatório.");
+  }
+
+  const existing = await prisma.issue.findUnique({
+    where: { id: issueId },
+    include: { project: true },
+  });
+
+  if (!existing) {
+    throw new Error("Pendência não encontrada.");
+  }
+
+  if (currentUser.role !== "ADMIN_GERAL" && existing.project.organizationId !== currentUser.organizationId) {
+    throw new Error("Acesso negado para excluir esta pendência.");
+  }
+
+  await prisma.issue.delete({
+    where: { id: issueId },
+  });
+
+  if (existing.isOperationalBlocker && existing.departmentId) {
+    await recalculateDepartmentOperationalStatus(existing.departmentId);
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      organizationId: currentUser.organizationId,
+      projectId: existing.projectId,
+      actorId: currentUser.id,
+      actorName: currentUser.name,
+      action: "DELETE",
+      targetType: "Issue",
+      targetId: issueId,
+      changedFields: JSON.stringify({ title: existing.title }),
+      justification: "Exclusão de pendência",
+    },
+  });
 
   revalidatePath("/pendencias");
   revalidatePath("/departamentos");
