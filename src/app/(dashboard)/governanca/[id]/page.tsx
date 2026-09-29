@@ -295,8 +295,8 @@ export default async function MeetingDetailPage({
               </h1>
               <StatusBadge status={meeting.status} />
               {isFrozen && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <Lock className="w-3 h-3 text-emerald-700" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-centi-100 text-centi-900 border border-centi-300">
+                  <Lock className="w-3 h-3 text-centi-700" />
                   SNAPSHOT IMUTÁVEL CONGELADO
                 </span>
               )}
@@ -312,7 +312,7 @@ export default async function MeetingDetailPage({
           <a
             href={`/api/exports/docx/${meeting.id}`}
             download
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-800 hover:bg-centi-900 text-white text-xs font-bold shadow-xs transition-colors"
           >
             <Download className="w-4 h-4" />
             Baixar DOCX Oficial
@@ -322,7 +322,7 @@ export default async function MeetingDetailPage({
             <form action={emitOfficialMeetingAction}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-800 hover:bg-centi-900 text-white text-xs font-bold shadow-xs transition-colors"
               >
                 <ShieldCheck className="w-4 h-4" />
                 Emitir e Congelar Ata Oficial

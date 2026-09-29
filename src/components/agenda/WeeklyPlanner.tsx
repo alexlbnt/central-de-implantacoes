@@ -205,11 +205,11 @@ export function WeeklyPlanner({
             onClick={() => setViewMode("planner")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
               viewMode === "planner"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
+                ? "bg-white text-centi-900 shadow-xs font-bold border border-centi-300 ring-1 ring-centi-400/30"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <CalendarDays className="w-3.5 h-3.5 text-emerald-700" />
+            <CalendarDays className="w-3.5 h-3.5 text-centi-700" />
             <span>Planner Semanal (Seg a Sex)</span>
           </button>
           <button
@@ -217,7 +217,7 @@ export function WeeklyPlanner({
             onClick={() => setViewMode("lista")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
               viewMode === "lista"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
+                ? "bg-white text-centi-900 shadow-xs font-bold border border-centi-300 ring-1 ring-centi-400/30"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -243,7 +243,7 @@ export function WeeklyPlanner({
                 onClick={() => setWeekOffset(0)}
                 className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors ${
                   weekOffset === 0
-                    ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                    ? "bg-centi-100 border-centi-300 text-centi-900 font-bold"
                     : "border-slate-200 hover:bg-slate-50 text-slate-700"
                 }`}
               >
@@ -269,9 +269,9 @@ export function WeeklyPlanner({
         <button
           type="button"
           onClick={() => handleOpenAddForDay(new Date().toISOString().split("T")[0])}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-900 hover:bg-centi-950 text-white text-xs font-semibold transition-colors shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-800 hover:bg-centi-900 text-white text-xs font-bold transition-colors shadow-2xs"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5 text-centi-200" />
           <span>+ Agendar Compromisso</span>
         </button>
       </div>
@@ -291,7 +291,7 @@ export function WeeklyPlanner({
                 key={day.dateKey}
                 className={`flex flex-col rounded-xl border transition-all ${
                   day.isToday
-                    ? "bg-emerald-50/30 border-emerald-400 ring-1 ring-emerald-300 shadow-sm"
+                    ? "bg-centi-50/40 border-centi-400 ring-1 ring-centi-300 shadow-sm"
                     : "bg-white border-slate-200 shadow-2xs"
                 }`}
               >
@@ -299,7 +299,7 @@ export function WeeklyPlanner({
                 <div
                   className={`p-3 border-b flex items-center justify-between rounded-t-xl ${
                     day.isToday
-                      ? "bg-emerald-100/60 border-emerald-200 text-emerald-950"
+                      ? "bg-centi-100/70 border-centi-200 text-centi-950"
                       : "bg-slate-50 border-slate-200 text-slate-800"
                   }`}
                 >
@@ -307,7 +307,7 @@ export function WeeklyPlanner({
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-xs">{day.dayName}</span>
                       {day.isToday && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-emerald-700 text-white uppercase tracking-wider">
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-centi-700 text-white uppercase tracking-wider">
                           Hoje
                         </span>
                       )}
@@ -324,7 +324,7 @@ export function WeeklyPlanner({
                     <button
                       type="button"
                       onClick={() => handleOpenAddForDay(day.dateKey)}
-                      className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/80 transition-colors"
+                      className="p-1 rounded-md text-centi-700 hover:text-centi-900 hover:bg-centi-100/80 transition-colors"
                       title={`Agendar na ${day.dayName}`}
                     >
                       <Plus className="w-4 h-4" />
@@ -340,7 +340,7 @@ export function WeeklyPlanner({
                       <button
                         type="button"
                         onClick={() => handleOpenAddForDay(day.dateKey)}
-                        className="mt-2 inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold"
+                        className="mt-2 inline-flex items-center gap-1 text-[11px] text-centi-700 hover:text-centi-800 font-semibold"
                       >
                         <Plus className="w-3 h-3" />
                         <span>Planejar</span>
@@ -395,7 +395,7 @@ export function WeeklyPlanner({
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(ev)}
-                              className="text-slate-400 hover:text-emerald-700 p-0.5 rounded transition-colors text-[10px] flex items-center gap-0.5 font-medium"
+                              className="text-slate-400 hover:text-centi-700 p-0.5 rounded transition-colors text-[10px] flex items-center gap-0.5 font-medium"
                               title="Editar compromisso"
                             >
                               <Pencil className="w-3 h-3" />
@@ -480,7 +480,7 @@ export function WeeklyPlanner({
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(ev)}
-                      className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-centi-700 hover:bg-centi-50 transition-colors"
                       title="Editar compromisso"
                     >
                       <Pencil className="w-4 h-4" />
@@ -511,7 +511,7 @@ export function WeeklyPlanner({
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  editingEvent ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                  editingEvent ? "bg-amber-100 text-amber-800" : "bg-centi-100 text-centi-900 border border-centi-300"
                 }`}>
                   {editingEvent ? <Pencil className="w-4 h-4" /> : <CalendarDays className="w-4 h-4" />}
                 </div>
@@ -550,7 +550,7 @@ export function WeeklyPlanner({
                   required
                   defaultValue={editingEvent ? editingEvent.title : ""}
                   placeholder="Ex: Treinamento Módulo Folha..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 />
               </div>
 
@@ -562,7 +562,7 @@ export function WeeklyPlanner({
                   name="type"
                   required
                   defaultValue={editingEvent ? editingEvent.type : "TREINAMENTO"}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 >
                   <option value="TREINAMENTO">Treinamento Prático</option>
                   <option value="TESTE">Teste de Homologação / Autonomia</option>
@@ -584,7 +584,7 @@ export function WeeklyPlanner({
                       ? getLocalDateKey(editingEvent.startDateTime)
                       : (selectedDate || getTodayDateKey())
                   }
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 />
               </div>
 
@@ -598,7 +598,7 @@ export function WeeklyPlanner({
                     name="startTime"
                     required
                     defaultValue={editingEvent ? formatTimeInput(editingEvent.startDateTime) : "09:00"}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -610,7 +610,7 @@ export function WeeklyPlanner({
                     name="endTime"
                     required
                     defaultValue={editingEvent ? formatTimeInput(editingEvent.endDateTime) : "12:00"}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -625,7 +625,7 @@ export function WeeklyPlanner({
                     name="responsibleName"
                     required
                     defaultValue={editingEvent ? editingEvent.responsibleName : defaultResponsibleName}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -635,7 +635,7 @@ export function WeeklyPlanner({
                     name="location"
                     defaultValue={editingEvent ? (editingEvent.location ?? "") : "Presencial / Gabinete"}
                     placeholder="Sala de Reuniões, RH, Remoto..."
-                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -649,7 +649,7 @@ export function WeeklyPlanner({
                   name="participants"
                   defaultValue={editingEvent ? (editingEvent.participants ?? "") : ""}
                   placeholder="Ex: Secretário, Diretor de RH, Operadores..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 />
               </div>
 
@@ -660,7 +660,7 @@ export function WeeklyPlanner({
                   rows={2}
                   defaultValue={editingEvent ? (editingEvent.notes ?? "") : ""}
                   placeholder="Objetivos específicos do compromisso ou materiais necessários..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none resize-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none resize-none"
                 />
               </div>
 

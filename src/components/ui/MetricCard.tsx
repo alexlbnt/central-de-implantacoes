@@ -26,7 +26,7 @@ export function MetricCard({
   const getVariantStyles = () => {
     switch (variant) {
       case "success":
-        return "border-emerald-200 bg-emerald-50/40 text-emerald-950";
+        return "border-centi-200 bg-centi-50/60 text-centi-950";
       case "warning":
         return "border-amber-200 bg-amber-50/40 text-amber-950";
       case "danger":

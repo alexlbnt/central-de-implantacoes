@@ -150,8 +150,8 @@ export default async function EquipePage({
           </div>
           {canManageTeam && (
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-centi-100 text-centi-900 border border-centi-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-centi-700" />
                 Gestão da Equipe Habilitada
               </span>
               <AddTeamMemberButton />
@@ -165,7 +165,7 @@ export default async function EquipePage({
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-700" />
+                <ShieldCheck className="w-5 h-5 text-centi-700" />
                 <div>
                   <h2 className="text-sm font-bold text-slate-900">Equipe Técnica Centi Soluções</h2>
                   <p className="text-[11px] text-slate-500">Colaboradores Centi com usuário e acesso ativo à Central</p>
@@ -244,7 +244,7 @@ export default async function EquipePage({
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-emerald-700" />
+              <Building2 className="w-5 h-5 text-centi-700" />
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
                   Pontos Focais do Município ({project.municipality?.name || "Município"})
@@ -258,9 +258,9 @@ export default async function EquipePage({
           </div>
 
           {/* Aviso de Uso Interno Centi */}
-          <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-950 text-[11px] space-y-1">
-            <div className="font-bold flex items-center gap-1.5 text-emerald-800">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+          <div className="p-3 bg-centi-50/70 border border-centi-200 rounded-lg text-centi-950 text-[11px] space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-centi-800">
+              <ShieldCheck className="w-3.5 h-3.5 text-centi-700 shrink-0" />
               <span>Registro de Contatos & Titulares Setoriais</span>
             </div>
             <p className="text-slate-600">
@@ -282,7 +282,7 @@ export default async function EquipePage({
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="font-bold text-xs text-slate-900">{p.name}</div>
-                      <div className="text-[11px] font-semibold text-emerald-800">{p.roleTitle}</div>
+                      <div className="text-[11px] font-semibold text-centi-800">{p.roleTitle}</div>
                     </div>
                   </div>
 
@@ -321,7 +321,7 @@ export default async function EquipePage({
           {/* Form para Cadastrar Ponto Focal Municipal */}
           <div className="pt-3 border-t border-slate-200">
             <h3 className="text-xs font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-              <Plus className="w-3.5 h-3.5 text-emerald-700" />
+              <Plus className="w-3.5 h-3.5 text-centi-700" />
               Cadastrar Ponto Focal Municipal
             </h3>
             <form action={createMunicipalPersonAction} className="space-y-2 text-xs">
@@ -376,7 +376,7 @@ export default async function EquipePage({
 
               <button
                 type="submit"
-                className="w-full py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold"
+                className="w-full py-1.5 bg-centi-800 hover:bg-centi-900 text-white rounded-lg text-xs font-bold transition-colors"
               >
                 Salvar Ponto Focal
               </button>

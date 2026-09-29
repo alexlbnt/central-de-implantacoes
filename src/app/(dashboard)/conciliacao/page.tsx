@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 import { generateTK059CopyPackage, evaluateReconciliationStatus } from "@/lib/domain/tk059-mapper";
 
 export default async function ConciliacaoTK059Page({
@@ -155,6 +156,9 @@ export default async function ConciliacaoTK059Page({
         </div>
       </div>
 
+      {/* Navegação contextual do módulo */}
+      <ModuleNavTabs module="governanca" />
+
       {/* Banner de Fonte Única da Verdade */}
       <div className="p-4 bg-slate-900 text-slate-100 rounded-xl border border-slate-800 space-y-1.5 shadow-sm">
         <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
@@ -176,14 +180,14 @@ export default async function ConciliacaoTK059Page({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Conferidos Oficialmente</div>
-          <div className="text-2xl font-bold text-emerald-700 mt-1">
+          <div className="text-2xl font-bold text-centi-700 mt-1">
             {references.filter((r) => r.status === "CONFERIDO").length}
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Registro Manual Declarado</div>
-          <div className="text-2xl font-bold text-emerald-700 mt-1">
+          <div className="text-2xl font-bold text-centi-700 mt-1">
             {references.filter((r) => r.status === "REGISTRO_MANUAL_DECLARADO").length}
           </div>
         </div>
@@ -222,7 +226,7 @@ export default async function ConciliacaoTK059Page({
                     key={ref.id}
                     className={`p-3.5 rounded-lg border transition-all ${
                       isSelected
-                        ? "border-centi-600 bg-emerald-50/40 ring-1 ring-centi-600"
+                        ? "border-centi-600 bg-centi-50/70 ring-1 ring-centi-500"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
@@ -234,7 +238,7 @@ export default async function ConciliacaoTK059Page({
                             {ref.system}
                           </span>
                           {ref.destinationTab && (
-                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-700">
+                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-centi-100 text-centi-900 border border-centi-200">
                               Aba: {ref.destinationTab}
                             </span>
                           )}
@@ -265,7 +269,7 @@ export default async function ConciliacaoTK059Page({
                           <input type="hidden" name="refId" value={ref.id} />
                           <button
                             type="submit"
-                            className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[11px] font-bold shadow-2xs"
+                            className="px-2.5 py-1 bg-centi-800 hover:bg-centi-900 text-white rounded text-[11px] font-bold shadow-2xs transition-colors"
                           >
                             Declarar Registro Efetuado
                           </button>
@@ -277,7 +281,7 @@ export default async function ConciliacaoTK059Page({
                           <input type="hidden" name="refId" value={ref.id} />
                           <button
                             type="submit"
-                            className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[11px] font-bold shadow-2xs"
+                            className="px-2.5 py-1 bg-centi-800 hover:bg-centi-900 text-white rounded text-[11px] font-bold shadow-2xs transition-colors"
                           >
                             ✓ Conferir e Homologar
                           </button>

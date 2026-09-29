@@ -169,7 +169,7 @@ export default async function ProjetosPage() {
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full py-2 px-3 bg-centi-900 hover:bg-centi-950 text-white rounded-lg font-medium text-xs transition-colors shadow-xs"
+              className="w-full py-2 px-3 bg-centi-800 hover:bg-centi-900 text-white rounded-lg font-bold text-xs transition-colors shadow-xs"
             >
               Criar Projeto
             </button>
@@ -185,7 +185,7 @@ export default async function ProjetosPage() {
           return (
             <div
               key={proj.id}
-              className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all"
+              className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-centi-300 transition-all"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
@@ -204,7 +204,7 @@ export default async function ProjetosPage() {
                       DEMO
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-centi-100 text-centi-900 border border-centi-300">
                       REAL
                     </span>
                   )}
@@ -236,7 +236,7 @@ export default async function ProjetosPage() {
                 </span>
                 <Link
                   href={`/?projectId=${proj.id}`}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-medium transition-colors"
+                  className="px-3 py-1.5 bg-centi-50 hover:bg-centi-100 text-centi-900 border border-centi-200/80 rounded-lg font-semibold transition-colors shadow-2xs"
                 >
                   Abrir no Painel
                 </Link>

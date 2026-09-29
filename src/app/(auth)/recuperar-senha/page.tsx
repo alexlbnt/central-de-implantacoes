@@ -32,10 +32,10 @@ export default function RecuperarSenhaPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-100">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#f8faf9]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-centi-900 text-white shadow-md mb-4">
-          <KeyRound className="w-8 h-8 text-emerald-300" />
+          <KeyRound className="w-8 h-8 text-centi-300" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Recuperação de Acesso
@@ -49,19 +49,19 @@ export default function RecuperarSenhaPage() {
         <div className="bg-white py-8 px-6 shadow-sm rounded-xl sm:px-10 border border-slate-200">
           {successToken ? (
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+              <div className="p-4 rounded-lg bg-centi-50 border border-centi-200 text-centi-950 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-centi-700 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
                   <p className="font-semibold">Solicitação registrada com sucesso!</p>
-                  <p className="mt-1 text-xs text-emerald-800">
+                  <p className="mt-1 text-xs text-centi-800">
                     Em ambiente local transparente (sem SMTP externo configurado), seu link seguro temporário foi gerado com validade de 1 hora:
                   </p>
-                  <div className="mt-2 p-2 bg-white rounded border border-emerald-300 font-mono text-xs break-all select-all">
+                  <div className="mt-2 p-2 bg-white rounded border border-centi-300 font-mono text-xs break-all select-all">
                     /redefinir-senha?token={successToken}
                   </div>
                   <Link
                     href={`/redefinir-senha?token=${successToken}`}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs transition-colors"
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-800 hover:bg-centi-900 text-white font-semibold text-xs transition-colors"
                   >
                     <span>Prosseguir para Redefinição</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -106,7 +106,7 @@ export default function RecuperarSenhaPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-900 hover:bg-centi-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-centi-700 transition-colors disabled:opacity-50"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-800 hover:bg-centi-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-centi-700 transition-colors disabled:opacity-50"
               >
                 {loading ? "Processando..." : "Gerar Link de Recuperação"}
               </button>

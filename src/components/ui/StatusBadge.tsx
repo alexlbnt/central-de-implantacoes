@@ -20,14 +20,14 @@ export function StatusBadge({
       case "OPERACIONAL":
         return {
           label: "Operacional",
-          bg: "bg-emerald-50 border-emerald-200 text-emerald-800",
-          icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+          bg: "bg-centi-100 border-centi-300 text-centi-900 font-semibold",
+          icon: <CheckCircle2 className="w-3.5 h-3.5 text-centi-600" />,
         };
       case "OPERACAO_ASSISTIDA":
         return {
           label: "Operação Assistida",
-          bg: "bg-teal-50 border-teal-200 text-teal-800",
-          icon: <Clock className="w-3.5 h-3.5 text-teal-600" />,
+          bg: "bg-olive-100 border-olive-300 text-olive-900 font-semibold",
+          icon: <Clock className="w-3.5 h-3.5 text-olive-700" />,
         };
       case "EM_PREPARACAO":
         return {

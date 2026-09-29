@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { revalidatePath } from "next/cache";
 import { FileSpreadsheet, Plus, Download, FileText, CheckCircle2, Shield } from "lucide-react";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
+import { NewMeetingModal } from "@/components/governanca/NewMeetingModal";
 
 export default async function GovernancaPage({
   searchParams,
@@ -65,87 +67,44 @@ export default async function GovernancaPage({
     revalidatePath("/governanca");
   }
 
+  const totalMeetings = project.meetings.length;
+  const finalizedMeetings = project.meetings.filter((m) => m.status === "FINALIZADA").length;
+  const draftMeetings = project.meetings.filter((m) => m.status === "RASCUNHO").length;
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Governança Semanal e Atas Oficiais
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Projeto: <strong>{project.name}</strong>  |  Modelo Corporativo Centi Soluções (NOP 001/2026).
+          <p className="text-xs text-slate-500 mt-0.5">
+            Projeto: <strong>{project.name}</strong> &bull; Ritos e salvaguardas contratuais (NOP 001/2026)
           </p>
         </div>
+        <NewMeetingModal defaultLeaderName={user?.name || "Líder de Implantação"} createAction={createMeetingAction} />
       </div>
 
-      {/* Formulário Rápido de Criação de Ata */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <Plus className="w-4 h-4 text-centi-800" />
-          Abertura de Nova Ata Semanal de Governança
-        </h2>
+      {/* Navegação contextual do módulo */}
+      <ModuleNavTabs module="governanca" />
 
-        <form action={createMeetingAction} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-          <div>
-            <label className="block font-medium text-slate-700 mb-1">Data da Reunião</label>
-            <input
-              type="date"
-              name="meetingDate"
-              required
-              defaultValue={new Date().toISOString().split("T")[0]}
-              className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-            />
-          </div>
+      {/* Métricas de Governança */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total de Reuniões</div>
+          <div className="text-2xl font-bold text-slate-900 mt-0.5">{totalMeetings}</div>
+        </div>
 
-          <div>
-            <label className="block font-medium text-slate-700 mb-1">Horário (Início às Término)</label>
-            <div className="flex items-center gap-1">
-              <input
-                type="text"
-                name="startTime"
-                defaultValue="09:00"
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-              <span className="text-slate-400">às</span>
-              <input
-                type="text"
-                name="endTime"
-                defaultValue="10:30"
-                className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-              />
-            </div>
-          </div>
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Atas Finalizadas</div>
+          <div className="text-2xl font-bold text-centi-800 mt-0.5">{finalizedMeetings}</div>
+        </div>
 
-          <div>
-            <label className="block font-medium text-slate-700 mb-1">Local / Canal</label>
-            <input
-              type="text"
-              name="location"
-              defaultValue="Prefeitura e Sala Virtual (Teams)"
-              className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium text-slate-700 mb-1">Responsável pela Execução</label>
-            <input
-              type="text"
-              name="executionLeader"
-              defaultValue={user?.name || "Líder de Implantação"}
-              className="w-full p-2 border border-slate-300 rounded-lg text-xs"
-            />
-          </div>
-
-          <div className="sm:col-span-2 lg:col-span-4 flex justify-end pt-2">
-            <button
-              type="submit"
-              className="py-2 px-4 bg-centi-900 hover:bg-centi-950 text-white rounded-lg font-medium text-xs shadow-xs"
-            >
-              Criar Rascunho da Ata
-            </button>
-          </div>
-        </form>
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Rascunhos em Aberto</div>
+          <div className="text-2xl font-bold text-amber-700 mt-0.5">{draftMeetings}</div>
+        </div>
       </div>
 
       {/* Lista de Atas */}
@@ -167,7 +126,7 @@ export default async function GovernancaPage({
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                     meeting.status === "EMITIDA" || meeting.status === "ASSINADA"
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                      ? "bg-centi-100 text-centi-900 border-centi-300"
                       : "bg-slate-100 text-slate-700 border-slate-200"
                   }`}
                 >

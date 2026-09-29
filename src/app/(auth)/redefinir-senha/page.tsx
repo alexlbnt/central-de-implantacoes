@@ -73,11 +73,11 @@ function RedefinirSenhaForm() {
   if (success) {
     return (
       <div className="space-y-4">
-        <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+        <div className="p-4 rounded-lg bg-centi-50 border border-centi-200 text-centi-950 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-centi-700 mt-0.5 flex-shrink-0" />
           <div className="text-sm">
             <p className="font-semibold">Senha alterada com sucesso!</p>
-            <p className="mt-1 text-xs text-emerald-800">
+            <p className="mt-1 text-xs text-centi-800">
               Sua nova credencial foi registrada com segurança. Você já pode autenticar na Central de Implantações.
             </p>
           </div>
@@ -86,7 +86,7 @@ function RedefinirSenhaForm() {
         <button
           type="button"
           onClick={() => router.push("/login")}
-          className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-600 hover:bg-centi-700 transition-colors"
+          className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-800 hover:bg-centi-900 transition-colors"
         >
           Ir para a tela de Login
         </button>
@@ -116,7 +116,7 @@ function RedefinirSenhaForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mínimo 6 caracteres"
-            className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-centi-500 focus:border-centi-500 sm:text-sm"
+            className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-centi-600 focus:border-centi-600 sm:text-sm"
           />
         </div>
       </div>
@@ -134,7 +134,7 @@ function RedefinirSenhaForm() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Repita a nova senha"
-            className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-centi-500 focus:border-centi-500 sm:text-sm"
+            className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-centi-600 focus:border-centi-600 sm:text-sm"
           />
         </div>
       </div>
@@ -142,7 +142,7 @@ function RedefinirSenhaForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-600 hover:bg-centi-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-centi-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-800 hover:bg-centi-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-centi-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {loading ? (
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -166,10 +166,10 @@ function RedefinirSenhaForm() {
 
 export default function RedefinirSenhaPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-100">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#f8faf9]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-centi-900 text-white shadow-md mb-4">
-          <KeyRound className="w-8 h-8 text-emerald-300" />
+          <KeyRound className="w-8 h-8 text-centi-300" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Redefinir Senha

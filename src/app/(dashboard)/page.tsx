@@ -22,7 +22,10 @@ import {
   UserCheck,
   ArrowRight,
   Sparkles,
+  Plus,
+  BookOpen,
 } from "lucide-react";
+import { DepartmentStatusTable, DepartmentRowData } from "@/components/dashboard/DepartmentStatusTable";
 
 export default async function DashboardOverviewPage({
   searchParams,
@@ -128,23 +131,39 @@ export default async function DashboardOverviewPage({
   // Lista "Meu dia" (tarefas atribuídas ao usuário logado)
   const myDayIssues = project.issues.filter((i) => i.assigneeId === user?.id);
 
-  const nowFormatted = new Date().toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  // Prepara dados dos departamentos para tabela interativa e limpa
+  const departmentRows: DepartmentRowData[] = allDepartments.map((dept) => {
+    const deptDeliverables = dept.deliverables;
+    const prog = calculateDeliverableProgress(deptDeliverables);
+    const deptAutonomy = dept.criticalProcesses.flatMap((p) => p.autonomyReqs);
+    const auto = calculateAutonomyIndex(deptAutonomy);
+    const analistaName = dept.assignments[0]?.user.name || "A definir";
+    const municipalName = dept.municipalResponsible?.name || "A definir";
+    const blocker = dept.issues.find((i) => i.isOperationalBlocker);
+
+    return {
+      id: dept.id,
+      name: dept.name,
+      entityName: dept.entityName,
+      operationalStatus: dept.operationalStatus,
+      revalidationRequired: dept.revalidationRequired,
+      deliverableProgressText: prog.displayText,
+      autonomyProgressText: auto.displayText,
+      analistaName,
+      municipalName,
+      blockerTitle: blocker?.title || null,
+      lastDiagnosisNote: dept.lastDiagnosisNote || null,
+    };
   });
 
   return (
     <div className="space-y-6">
       {/* Cabeçalho do Painel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              Painel de Implantação
+              Painel Geral
             </h1>
             {project.isDemo && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
@@ -153,22 +172,24 @@ export default async function DashboardOverviewPage({
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
             <strong>{project.name}</strong> ({project.municipality?.name || "Município"} - {project.municipality?.state || "UF"}) &bull; Fase: <strong className="text-slate-700">{project.phase}</strong>
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
-            href="/governanca"
+            href="/diario"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
           >
-            <span>Preparar Ata Semanal</span>
+            <BookOpen className="w-3.5 h-3.5 text-slate-500" />
+            <span>Diário de Campo</span>
           </Link>
           <Link
             href="/pendencias"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-centi-900 text-white rounded-lg text-xs font-semibold hover:bg-centi-950 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-centi-800 text-white rounded-lg text-xs font-semibold hover:bg-centi-900 transition-colors shadow-xs"
           >
+            <Plus className="w-3.5 h-3.5" />
             <span>Nova Pendência</span>
           </Link>
         </div>
@@ -215,154 +236,70 @@ export default async function DashboardOverviewPage({
         />
       </div>
 
-      {/* Faixa Compacta de Alertas Rápidos */}
-      <div className="flex flex-wrap items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">
-          Atenção Rápida:
-        </span>
+      {/* Resumo Operacional Imediato */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-centi-700" />
+          <span className="font-semibold text-slate-800">Situação Operacional:</span>
+          {overdueActions.length === 0 && waitingMunicipal.length === 0 && deptSummary.revalidationRequired === 0 ? (
+            <span className="text-centi-900 font-medium">Cronograma regular e sem pendências em atraso crítico.</span>
+          ) : (
+            <span className="text-slate-500">Itens sob acompanhamento da liderança:</span>
+          )}
+        </div>
 
-        <Link
-          href="/pendencias?filtro=vencidas"
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-colors ${
-            overdueActions.length > 0
-              ? "bg-amber-100/80 text-amber-900 hover:bg-amber-100 border border-amber-300/80"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-          }`}
-        >
-          <CalendarDays className="w-3.5 h-3.5 text-amber-600" />
-          <span>Ações Vencidas: <strong>{overdueActions.length}</strong></span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/pendencias?filtro=vencidas"
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              overdueActions.length > 0
+                ? "bg-amber-100 text-amber-900 border border-amber-300 font-bold"
+                : "bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5 text-amber-700" />
+            <span>Vencidas: <strong>{overdueActions.length}</strong></span>
+          </Link>
 
-        <Link
-          href="/pendencias?filtro=aguardando_municipio"
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-colors ${
-            waitingMunicipal.length > 0
-              ? "bg-blue-50 text-blue-900 hover:bg-blue-100 border border-blue-200"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5 text-blue-600" />
-          <span>Aguardando Município: <strong>{waitingMunicipal.length}</strong></span>
-        </Link>
+          <Link
+            href="/pendencias?filtro=aguardando_municipio"
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              waitingMunicipal.length > 0
+                ? "bg-blue-50 text-blue-900 border border-blue-200 font-bold"
+                : "bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 text-blue-600" />
+            <span>Aguardando Município: <strong>{waitingMunicipal.length}</strong></span>
+          </Link>
 
-        <Link
-          href="/departamentos?filtro=revalidacao"
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-colors ${
-            deptSummary.revalidationRequired > 0
-              ? "bg-orange-50 text-orange-900 hover:bg-orange-100 border border-orange-200"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-          }`}
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-orange-600" />
-          <span>Revalidação (&gt; 7 dias): <strong>{deptSummary.revalidationRequired}</strong></span>
-        </Link>
+          <Link
+            href="/departamentos?filtro=revalidacao"
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              deptSummary.revalidationRequired > 0
+                ? "bg-orange-50 text-orange-900 border border-orange-200 font-bold"
+                : "bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-orange-600" />
+            <span>Revalidação (&gt;7d): <strong>{deptSummary.revalidationRequired}</strong></span>
+          </Link>
 
-        <Link
-          href="/documentos"
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
-        >
-          <FileSignature className="w-3.5 h-3.5 text-slate-500" />
-          <span>Assinaturas Pendentes: <strong>{project.issues.filter((i) => i.waitingType === "ASSINATURA").length}</strong></span>
-        </Link>
+          <Link
+            href="/documentos"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
+          >
+            <FileSignature className="w-3.5 h-3.5 text-slate-500" />
+            <span>Assinaturas: <strong>{project.issues.filter((i) => i.waitingType === "ASSINATURA").length}</strong></span>
+          </Link>
+        </div>
       </div>
 
       {/* Seção Central Dividida: Tabela de Departamentos + Painéis de Atenção */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tabela Central de Departamentos (2 colunas no desktop) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">
-                Situação dos Departamentos
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Progresso funcional, responsáveis e bloqueios por setor.
-              </p>
-            </div>
-            <Link
-              href="/departamentos"
-              className="text-xs font-semibold text-centi-700 hover:text-centi-900 inline-flex items-center gap-1"
-            >
-              Ver todos <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                  <th className="py-2.5 px-3">Entidade / Departamento</th>
-                  <th className="py-2.5 px-3">Responsáveis</th>
-                  <th className="py-2.5 px-3">Situação</th>
-                  <th className="py-2.5 px-3">Entregas</th>
-                  <th className="py-2.5 px-3">Autonomia</th>
-                  <th className="py-2.5 px-3">Impedimento / Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {allDepartments.map((dept) => {
-                  const deptDeliverables = dept.deliverables;
-                  const prog = calculateDeliverableProgress(deptDeliverables);
-                  const deptAutonomy = dept.criticalProcesses.flatMap((p) => p.autonomyReqs);
-                  const auto = calculateAutonomyIndex(deptAutonomy);
-
-                  const analistaName = dept.assignments[0]?.user.name || "A definir";
-                  const municipalName = dept.municipalResponsible?.name || "A definir";
-                  const blocker = dept.issues.find((i) => i.isOperationalBlocker);
-
-                  return (
-                    <tr
-                      key={dept.id}
-                      className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
-                    >
-                      <td className="py-3 px-3">
-                        <Link href={`/departamentos/${dept.id}`} className="block">
-                          <div className="font-semibold text-slate-900 group-hover:text-centi-800">
-                            {dept.name}
-                          </div>
-                          <div className="text-[11px] text-slate-500">{dept.entityName}</div>
-                        </Link>
-                      </td>
-
-                      <td className="py-3 px-3 text-[11px]">
-                        <div><span className="font-medium text-slate-700">Centi:</span> {analistaName}</div>
-                        <div><span className="font-medium text-slate-700">Mun:</span> {municipalName}</div>
-                      </td>
-
-                      <td className="py-3 px-3">
-                        <StatusBadge
-                          status={dept.operationalStatus}
-                          revalidationRequired={dept.revalidationRequired}
-                        />
-                      </td>
-
-                      <td className="py-3 px-3 font-mono text-[11px]">
-                        {prog.displayText}
-                      </td>
-
-                      <td className="py-3 px-3 font-mono text-[11px]">
-                        {auto.displayText}
-                      </td>
-
-                      <td className="py-3 px-3 text-[11px]">
-                        {blocker ? (
-                          <span className="text-red-700 font-medium line-clamp-1" title={blocker.title}>
-                            ⛔ {blocker.title}
-                          </span>
-                        ) : dept.lastDiagnosisNote ? (
-                          <span className="text-slate-600 line-clamp-1" title={dept.lastDiagnosisNote}>
-                            {dept.lastDiagnosisNote}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 italic">Sem impedimentos</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Tabela Central Interativa de Departamentos */}
+        <div className="lg:col-span-2">
+          <DepartmentStatusTable departments={departmentRows} />
         </div>
 
         {/* Coluna Direita: "Precisa da sua Atenção" e "Meu Dia" */}
@@ -382,7 +319,7 @@ export default async function DashboardOverviewPage({
             <div className="mt-3 space-y-2.5 text-xs">
               {activeBlockers.length === 0 && overdueActions.length === 0 ? (
                 <div className="py-6 text-center text-slate-500">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                  <CheckCircle2 className="w-8 h-8 text-centi-600 mx-auto mb-2" />
                   <p>Nenhum bloqueio ou pendência vencida no momento.</p>
                 </div>
               ) : (

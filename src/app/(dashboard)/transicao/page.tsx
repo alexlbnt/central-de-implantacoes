@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 import {
   calculateDeliverableProgress,
   calculateAutonomyIndex,
@@ -295,6 +296,9 @@ export default async function TransicaoPage({
         <StatusBadge status={project.phase} />
       </div>
 
+      {/* Navegação contextual do módulo */}
+      <ModuleNavTabs module="governanca" />
+
       {/* 3 Cards de Estado da Prontidão */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -309,7 +313,7 @@ export default async function TransicaoPage({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Impedimentos Bloqueadores Ativos</div>
-          <div className={`text-2xl font-bold mt-1 ${blockersCount > 0 ? "text-red-600" : "text-emerald-600"}`}>
+          <div className={`text-2xl font-bold mt-1 ${blockersCount > 0 ? "text-red-600" : "text-centi-700"}`}>
             {blockersCount} {blockersCount === 1 ? "bloqueador" : "bloqueadores"}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -319,7 +323,7 @@ export default async function TransicaoPage({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Autonomia Comprovada</div>
-          <div className={`text-2xl font-bold mt-1 ${autonomyIndex.percentage !== null && autonomyIndex.percentage >= 80 ? "text-emerald-600" : "text-amber-600"}`}>
+          <div className={`text-2xl font-bold mt-1 ${autonomyIndex.percentage !== null && autonomyIndex.percentage >= 80 ? "text-centi-700" : "text-amber-600"}`}>
             {autonomyIndex.displayText}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -371,7 +375,7 @@ export default async function TransicaoPage({
                     type="submit"
                     className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors ${
                       checked
-                        ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                        ? "bg-centi-100 text-centi-900 border border-centi-300 hover:bg-centi-200"
                         : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                     }`}
                   >
@@ -399,12 +403,12 @@ export default async function TransicaoPage({
             </p>
 
             {cycle?.bridgeStartedAt ? (
-              <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-lg space-y-2">
-                <div className="flex items-center justify-between font-bold text-emerald-950">
+              <div className="p-4 bg-centi-50/80 border border-centi-200 rounded-lg space-y-2">
+                <div className="flex items-center justify-between font-bold text-centi-950">
                   <span>Ciclo Bridge em Andamento</span>
                   <span>Iniciado em: {new Date(cycle.bridgeStartedAt).toLocaleDateString("pt-BR")}</span>
                 </div>
-                <div className="text-[11px] text-emerald-800">
+                <div className="text-[11px] text-centi-800">
                   Responsável CRM: <strong>{cycle.crmResponsible || "Não atribuído"}</strong> • Suporte N2: <strong>{cycle.serviceDeskLead || "Não atribuído"}</strong>
                 </div>
 
@@ -412,7 +416,7 @@ export default async function TransicaoPage({
                   <form action={completeHandoverAction} className="pt-2">
                     <button
                       type="submit"
-                      className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold shadow-xs flex items-center justify-center gap-1.5"
+                      className="w-full py-2 bg-centi-800 hover:bg-centi-900 text-white rounded-lg font-bold shadow-xs flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <ShieldCheck className="w-4 h-4" />
                       Assinar Ata de Handover e Concluir Implantação

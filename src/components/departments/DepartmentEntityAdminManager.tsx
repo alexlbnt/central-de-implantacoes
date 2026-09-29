@@ -256,7 +256,7 @@ export function DepartmentEntityAdminProvider({
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 bg-centi-950 text-white">
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-emerald-400" />
+                <Building2 className="w-5 h-5 text-centi-300" />
                 <h3 className="font-bold text-sm">
                   {entityToEdit ? "Editar Instância Setorial" : "Nova Instância Setorial (Entidade)"}
                 </h3>
@@ -367,7 +367,7 @@ export function DepartmentEntityAdminProvider({
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 bg-centi-950 text-white flex-shrink-0">
               <div className="flex items-center gap-2">
-                <Layers className="w-5 h-5 text-emerald-400" />
+                <Layers className="w-5 h-5 text-centi-300" />
                 <h3 className="font-bold text-sm">
                   {deptToEdit ? "Editar Departamento" : "Novo Departamento (Unidade Setorial)"}
                 </h3>
@@ -578,8 +578,8 @@ export function AdminTopActions() {
 
   return (
     <div className="flex items-center gap-2.5 flex-wrap">
-      <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+      <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-centi-100 text-centi-900 border border-centi-300">
+        <ShieldCheck className="w-3.5 h-3.5 text-centi-700" />
         Admin Geral Habilitado
       </span>
 
@@ -587,7 +587,7 @@ export function AdminTopActions() {
         onClick={admin.openNewEntityModal}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors shadow-2xs"
       >
-        <Building2 className="w-3.5 h-3.5 text-emerald-700" />
+        <Building2 className="w-3.5 h-3.5 text-centi-700" />
         <span>+ Nova Instância Setorial</span>
       </button>
 
@@ -610,7 +610,7 @@ export function EntityAdminMenu({ entity }: { entity: EntityItem }) {
     <div className="flex items-center gap-1">
       <button
         onClick={() => admin.openNewDeptModal(entity.id)}
-        className="p-1.5 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+        className="p-1.5 rounded-lg text-slate-600 hover:text-centi-700 hover:bg-centi-50 transition-colors"
         title="Adicionar Departamento nesta Instância"
       >
         <Plus className="w-3.5 h-3.5" />

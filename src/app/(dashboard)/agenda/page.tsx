@@ -18,6 +18,7 @@ import {
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 import { WeeklyPlanner } from "@/components/agenda/WeeklyPlanner";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 
 export default async function AgendaPage({
   searchParams,
@@ -71,7 +72,7 @@ export default async function AgendaPage({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabeçalho com Navegação de Módulo Integrada */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
@@ -81,12 +82,13 @@ export default async function AgendaPage({
             Projeto: <strong>{project.name}</strong> | Planejamento semanal, reuniões, treinamentos, visitas e rituais de campo
           </p>
         </div>
+        <ModuleNavTabs module="rotina" />
       </div>
 
       {/* Rituais Diários de Campo (Compacto) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
         <div className="flex items-center gap-2 font-bold text-slate-700 text-xs">
-          <Clock className="w-4 h-4 text-emerald-700" />
+          <Clock className="w-4 h-4 text-centi-700" />
           <span>Rituais Diários de Campo:</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -94,8 +96,8 @@ export default async function AgendaPage({
             <Sunrise className="w-3.5 h-3.5 text-amber-600" />
             <span><strong>08:00</strong> Daily Centi (Alinhamento)</span>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200">
-            <Sun className="w-3.5 h-3.5 text-emerald-700" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-centi-50 text-centi-950 border border-centi-200">
+            <Sun className="w-3.5 h-3.5 text-centi-700" />
             <span><strong>12:00</strong> Checkpoint (Prefeitura)</span>
           </div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-900 border border-purple-200">

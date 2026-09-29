@@ -117,13 +117,13 @@ export function Header({
               setQuickActionsOpen(!quickActionsOpen);
               if (profileOpen) setProfileOpen(false);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-900 hover:bg-centi-950 text-white text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-centi-800 hover:bg-centi-900 text-white text-xs font-semibold shadow-xs transition-colors"
             aria-expanded={quickActionsOpen}
             title="Lançamento rápido de pendências, agenda, diário ou atas"
           >
-            <Plus className="w-3.5 h-3.5 text-emerald-300" />
+            <Plus className="w-3.5 h-3.5 text-centi-300" />
             <span className="hidden sm:inline">Ação Rápida</span>
-            <ChevronDown className="w-3 h-3 text-emerald-200" />
+            <ChevronDown className="w-3 h-3 text-centi-200" />
           </button>
 
           {quickActionsOpen && (
@@ -134,7 +134,7 @@ export function Header({
               <Link
                 href="/pendencias"
                 onClick={() => setQuickActionsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50/60 hover:text-emerald-950 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-centi-50/80 hover:text-centi-950 transition-colors"
               >
                 <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
                   <CheckSquare className="w-4 h-4" />
@@ -147,9 +147,9 @@ export function Header({
               <Link
                 href="/agenda"
                 onClick={() => setQuickActionsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50/60 hover:text-emerald-950 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-centi-50/80 hover:text-centi-950 transition-colors"
               >
-                <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                <div className="p-1.5 rounded-lg bg-centi-100 text-centi-800">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
@@ -160,7 +160,7 @@ export function Header({
               <Link
                 href="/diario"
                 onClick={() => setQuickActionsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50/60 hover:text-emerald-950 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-centi-50/80 hover:text-centi-950 transition-colors"
               >
                 <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
                   <FileText className="w-4 h-4" />
@@ -173,7 +173,7 @@ export function Header({
               <Link
                 href="/governanca"
                 onClick={() => setQuickActionsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50/60 hover:text-emerald-950 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-centi-50/80 hover:text-centi-950 transition-colors"
               >
                 <div className="p-1.5 rounded-lg bg-purple-50 text-purple-600">
                   <FileSpreadsheet className="w-4 h-4" />
@@ -207,7 +207,7 @@ export function Header({
             aria-expanded={profileOpen}
             aria-haspopup="true"
           >
-            <div className="w-8 h-8 rounded-full bg-centi-900 text-white flex items-center justify-center font-bold text-xs">
+            <div className="w-8 h-8 rounded-full bg-centi-800 text-white flex items-center justify-center font-bold text-xs ring-2 ring-centi-400/30">
               {session?.user?.name ? session.user.name[0].toUpperCase() : "U"}
             </div>
             <div className="hidden sm:block text-xs leading-tight">

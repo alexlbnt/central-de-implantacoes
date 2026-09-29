@@ -359,7 +359,7 @@ export default async function DepartmentDetailPage({
                     type="submit"
                     className={`px-3 py-1 rounded-md text-xs font-semibold ${
                       dept.isDataMigrationValidated
-                        ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                        ? "bg-centi-100 text-centi-900 border border-centi-300"
                         : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                     }`}
                   >
@@ -383,7 +383,7 @@ export default async function DepartmentDetailPage({
                     type="submit"
                     className={`px-3 py-1 rounded-md text-xs font-semibold ${
                       dept.isParametrizationValidated
-                        ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                        ? "bg-centi-100 text-centi-900 border border-centi-300"
                         : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                     }`}
                   >
@@ -407,7 +407,7 @@ export default async function DepartmentDetailPage({
                     type="submit"
                     className={`px-3 py-1 rounded-md text-xs font-semibold ${
                       dept.isTrainingCompleted
-                        ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                        ? "bg-centi-100 text-centi-900 border border-centi-300"
                         : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                     }`}
                   >
@@ -438,14 +438,14 @@ export default async function DepartmentDetailPage({
                   </div>
                 </div>
                 {dept.isLeaderValidated ? (
-                  <span className="px-3 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  <span className="px-3 py-1 rounded-md text-xs font-semibold bg-centi-100 text-centi-900 border border-centi-300">
                     Homologado por {dept.leaderValidatorName || "Líder"}
                   </span>
                 ) : isLeader ? (
                   <form action={validateLeaderAction}>
                     <button
                       type="submit"
-                      className="px-3 py-1 rounded-md text-xs font-semibold bg-centi-900 text-white hover:bg-centi-950 transition-colors shadow-xs"
+                      className="px-3 py-1 rounded-md text-xs font-bold bg-centi-800 text-white hover:bg-centi-900 transition-colors shadow-xs"
                     >
                       Homologar como Líder
                     </button>
@@ -492,7 +492,7 @@ export default async function DepartmentDetailPage({
                           <span
                             className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
                               latestTest.result === "APROVADO"
-                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                ? "bg-centi-50 text-centi-900 border-centi-300"
                                 : "bg-red-50 text-red-800 border-red-200"
                             }`}
                           >

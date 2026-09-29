@@ -173,7 +173,7 @@ export function TeamMemberAdminProvider({
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-centi-100 text-centi-900 border border-centi-300 flex items-center justify-center">
                   <UserPlus className="w-4 h-4" />
                 </div>
                 <div>
@@ -232,7 +232,7 @@ export function TeamMemberAdminProvider({
                         name="name"
                         required
                         placeholder="Ex: Mariana Silva"
-                        className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -244,7 +244,7 @@ export function TeamMemberAdminProvider({
                         name="email"
                         required
                         placeholder="mariana.silva@centi.com.br"
-                        className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                        className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -257,7 +257,7 @@ export function TeamMemberAdminProvider({
                       type="text"
                       name="password"
                       defaultValue="Centi@2026"
-                      className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                      className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
                       Padrão sugerido: <code>Centi@2026</code>. O usuário poderá redefinir em seu primeiro login.
@@ -277,7 +277,7 @@ export function TeamMemberAdminProvider({
                     <select
                       name="userId"
                       required
-                      className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                      className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                     >
                       <option value="">Selecione um analista...</option>
                       {availableUsers.map((u) => (
@@ -299,7 +299,7 @@ export function TeamMemberAdminProvider({
                   name="role"
                   required
                   defaultValue="ANALISTA"
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 >
                   <option value="LIDER_PROJETO">Líder de Implantação / Projeto</option>
                   <option value="ANALISTA">Analista de Implantação</option>
@@ -331,7 +331,7 @@ export function TeamMemberAdminProvider({
                           type="checkbox"
                           name="departmentIds"
                           value={dept.id}
-                          className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                          className="mt-0.5 rounded border-slate-300 text-centi-600 focus:ring-centi-600"
                         />
                         <div className="leading-tight">
                           <span className="font-semibold text-slate-800">{dept.name}</span>
@@ -379,7 +379,7 @@ export function TeamMemberAdminProvider({
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-centi-100 text-centi-900 border border-centi-300 flex items-center justify-center">
                   <Pencil className="w-4 h-4" />
                 </div>
                 <div>
@@ -413,7 +413,7 @@ export function TeamMemberAdminProvider({
                     name="name"
                     required
                     defaultValue={memberToEdit.name}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -425,7 +425,7 @@ export function TeamMemberAdminProvider({
                     name="email"
                     required
                     defaultValue={memberToEdit.email}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -439,7 +439,7 @@ export function TeamMemberAdminProvider({
                   name="role"
                   required
                   defaultValue={memberToEdit.role}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 >
                   <option value="LIDER_PROJETO">Líder de Implantação / Projeto</option>
                   <option value="ANALISTA">Analista de Implantação</option>
@@ -471,7 +471,7 @@ export function TeamMemberAdminProvider({
                           name="departmentIds"
                           value={dept.id}
                           defaultChecked={isChecked}
-                          className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                          className="mt-0.5 rounded border-slate-300 text-centi-600 focus:ring-centi-600"
                         />
                         <div className="leading-tight">
                           <span className="font-semibold text-slate-800">{dept.name}</span>

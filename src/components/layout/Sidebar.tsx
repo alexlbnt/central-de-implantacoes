@@ -20,7 +20,6 @@ import {
   ArrowRightLeft,
   ExternalLink,
   Settings,
-  Shield,
   X,
   ChevronLeft,
   ChevronRight,
@@ -37,52 +36,50 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  matchPrefixes?: string[];
+  sublabel?: string;
 }
 
-interface NavGroup {
-  title: string;
-  items: NavItem[];
-}
-
-const NAVIGATION_GROUPS: NavGroup[] = [
+const PRIMARY_ITEMS: NavItem[] = [
   {
-    title: "Rotina Diária",
-    items: [
-      { label: "Visão Geral", href: "/", icon: LayoutDashboard },
-      { label: "Planner Semanal", href: "/agenda", icon: Calendar },
-      { label: "Diário de Campo", href: "/diario", icon: FileText },
-    ],
+    label: "Painel Geral",
+    href: "/",
+    icon: LayoutDashboard,
+    sublabel: "Saúde & Foco de Hoje",
   },
   {
-    title: "Setores & Módulos",
-    items: [
-      { label: "Departamentos", href: "/departamentos", icon: Building2 },
-      { label: "Processos & Entregas", href: "/processos", icon: GitPullRequest },
-      { label: "Treinamentos & Autonomia", href: "/treinamentos", icon: GraduationCap },
-      { label: "Regras do Município", href: "/wiki", icon: BookOpen },
-    ],
+    label: "Rotina & Campo",
+    href: "/agenda",
+    icon: Calendar,
+    matchPrefixes: ["/agenda", "/diario"],
+    sublabel: "Agenda & Diário",
   },
   {
-    title: "Bloqueios & Ação",
-    items: [
-      { label: "Pendências & Kanban", href: "/pendencias", icon: CheckSquare },
-      { label: "Matriz de Riscos", href: "/riscos", icon: AlertTriangle },
-    ],
+    label: "Ações & Pendências",
+    href: "/pendencias",
+    icon: CheckSquare,
+    matchPrefixes: ["/pendencias", "/riscos"],
+    sublabel: "Kanban & Bloqueios",
   },
   {
-    title: "Governança & Docs",
-    items: [
-      { label: "Atas de Reunião", href: "/governanca", icon: FileSpreadsheet },
-      { label: "Documentos", href: "/documentos", icon: FolderArchive },
-      { label: "Transição Bridge", href: "/transicao", icon: ArrowRightLeft },
-      { label: "Registros TK059", href: "/conciliacao", icon: ExternalLink },
-    ],
+    label: "Setores & Autonomia",
+    href: "/departamentos",
+    icon: Building2,
+    matchPrefixes: ["/departamentos", "/processos", "/treinamentos", "/wiki"],
+    sublabel: "Departamentos & NOP",
+  },
+  {
+    label: "Governança & Docs",
+    href: "/governanca",
+    icon: FileSpreadsheet,
+    matchPrefixes: ["/governanca", "/documentos", "/transicao", "/conciliacao"],
+    sublabel: "Atas & Documentos",
   },
 ];
 
 const UTILITY_ITEMS: NavItem[] = [
   { label: "Equipe & Contatos", href: "/equipe", icon: Users },
-  { label: "Projetos", href: "/projetos", icon: FolderGit2 },
+  { label: "Meus Projetos", href: "/projetos", icon: FolderGit2 },
   { label: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
@@ -98,6 +95,10 @@ export function Sidebar({
     const isActive =
       item.href === "/"
         ? pathname === "/"
+        : item.matchPrefixes
+        ? item.matchPrefixes.some(
+            (p) => pathname === p || pathname.startsWith(`${p}/`)
+          )
         : pathname === item.href || pathname.startsWith(`${item.href}/`);
     const Icon = item.icon;
 
@@ -110,27 +111,27 @@ export function Sidebar({
             title={item.label}
             className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
               isActive
-                ? "bg-centi-600 text-white shadow-md font-semibold ring-1 ring-emerald-400/40"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/80"
+                ? "bg-white text-slate-900 shadow-sm font-bold ring-1 ring-black/5"
+                : "text-slate-900 hover:text-slate-950 hover:bg-white/20"
             }`}
           >
             <Icon
               className={`w-5 h-5 flex-shrink-0 ${
-                isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                isActive ? "text-slate-900" : "text-slate-800 group-hover:text-slate-950"
               }`}
             />
           </Link>
 
-          {/* Tooltip flutuante com nome e grupo */}
-          <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none items-center gap-2 animate-in fade-in zoom-in-95 duration-150">
+          {/* Tooltip flutuante com nome e sublabel */}
+          <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-white text-slate-950 text-xs font-semibold rounded-lg shadow-2xl border border-slate-200 whitespace-nowrap z-50 pointer-events-none items-center gap-2 animate-in fade-in zoom-in-95 duration-150">
             {groupTitle && (
-              <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">
+              <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">
                 {groupTitle} ›
               </span>
             )}
             <span>{item.label}</span>
             {isActive && (
-              <span className="px-1.5 py-0.5 rounded bg-centi-600 text-[10px] font-semibold text-white">
+              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-900 border border-slate-200">
                 Ativo
               </span>
             )}
@@ -144,14 +145,21 @@ export function Sidebar({
         key={item.href}
         href={item.href}
         onClick={onClose}
-        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+        className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all group ${
           isActive
-            ? "bg-centi-600 text-white shadow-xs font-semibold"
-            : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+            ? "bg-white text-slate-900 shadow-sm font-bold ring-1 ring-black/5"
+            : "text-slate-900 hover:text-slate-950 hover:bg-white/20"
         }`}
       >
-        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
-        <span className="truncate">{item.label}</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-slate-900" : "text-slate-800 group-hover:text-slate-950"}`} />
+          <span className="truncate">{item.label}</span>
+        </div>
+        {item.sublabel && !isActive && (
+          <span className="hidden xl:inline-block text-[10px] text-slate-800/80 font-normal truncate pl-1">
+            {item.sublabel}
+          </span>
+        )}
       </Link>
     );
   };
@@ -168,7 +176,7 @@ export function Sidebar({
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 bg-centi-950 text-slate-100 flex flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 bg-[#A2BB40] text-slate-950 flex flex-col border-r border-[#8fa735] transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-64 lg:w-16" : "w-64"
         } ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -176,32 +184,40 @@ export function Sidebar({
       >
         {/* Header da Sidebar */}
         {isCollapsed ? (
-          <div className="h-16 flex items-center justify-center px-2 border-b border-slate-800/80 bg-centi-900/50">
+          <div className="h-16 flex items-center justify-center px-2 border-b border-[#8fa735] bg-[#95ad38]">
             <button
               onClick={onToggleCollapse}
-              className="w-10 h-10 rounded-lg bg-centi-600 hover:bg-centi-500 text-white flex items-center justify-center shadow-sm transition-all group relative"
+              className="w-10 h-10 rounded-lg bg-white hover:bg-slate-50 text-slate-900 flex items-center justify-center shadow-sm transition-all group relative ring-1 ring-black/5 p-2"
               title="Expandir menu lateral (Ctrl+B)"
               aria-label="Expandir menu lateral"
             >
-              <Shield className="w-5 h-5 text-emerald-100 group-hover:hidden transition-transform" />
-              <ChevronRight className="w-5 h-5 text-white hidden group-hover:block transition-transform animate-in fade-in" />
+              <img
+                src="/centi-logo.png"
+                alt="Logo Centi"
+                className="w-5 h-5 object-contain group-hover:hidden transition-transform"
+              />
+              <ChevronRight className="w-5 h-5 text-slate-900 hidden group-hover:block transition-transform animate-in fade-in" />
 
               {/* Tooltip flutuante ao passar o mouse */}
-              <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-md shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none items-center gap-1.5">
+              <div className="hidden lg:group-hover:flex absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 bg-white text-slate-950 text-xs font-semibold rounded-md shadow-xl border border-slate-200 whitespace-nowrap z-50 pointer-events-none items-center gap-1.5">
                 <span>Expandir menu lateral</span>
-                <kbd className="px-1 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 font-mono border border-slate-700">Ctrl+B</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-slate-100 text-[10px] text-slate-700 font-mono border border-slate-300">Ctrl+B</kbd>
               </div>
             </button>
           </div>
         ) : (
-          <div className="h-16 flex items-center justify-between px-3.5 border-b border-slate-800/80 bg-centi-900/50">
+          <div className="h-16 flex items-center justify-between px-3.5 border-b border-[#8fa735] bg-[#95ad38]">
             <Link href="/" className="flex items-center gap-2.5 min-w-0 group">
-              <div className="w-8 h-8 rounded-lg bg-centi-600 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0 group-hover:bg-centi-500 transition-colors">
-                <Shield className="w-5 h-5 text-emerald-100" />
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm ring-1 ring-black/5 flex-shrink-0 hover:bg-slate-50 transition-colors p-1.5">
+                <img
+                  src="/centi-logo.png"
+                  alt="Logo Centi"
+                  className="w-5 h-5 object-contain"
+                />
               </div>
               <div className="truncate">
-                <div className="font-bold text-sm leading-none text-white truncate">Central Centi</div>
-                <div className="text-[10px] text-slate-400 mt-0.5 truncate">Gestão de Implantações</div>
+                <div className="font-bold text-sm leading-none text-slate-950 truncate">Central Centi</div>
+                <div className="text-[10px] text-slate-800 mt-0.5 truncate font-medium">Gestão de Implantações</div>
               </div>
             </Link>
 
@@ -209,7 +225,7 @@ export function Sidebar({
               {onToggleCollapse && (
                 <button
                   onClick={onToggleCollapse}
-                  className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  className="hidden lg:flex p-1.5 rounded-lg text-slate-800 hover:text-slate-950 hover:bg-white/20 transition-colors"
                   title="Recolher menu lateral (Ctrl+B)"
                   aria-label="Recolher menu lateral"
                 >
@@ -220,7 +236,7 @@ export function Sidebar({
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  className="lg:hidden p-1.5 rounded-lg text-slate-800 hover:text-slate-950 hover:bg-white/20"
                   aria-label="Fechar menu"
                 >
                   <X className="w-5 h-5" />
@@ -238,26 +254,22 @@ export function Sidebar({
             msOverflowStyle: "none",
           }}
         >
-          {NAVIGATION_GROUPS.map((group, groupIdx) => (
-            <div key={group.title} className="space-y-1">
-              {!isCollapsed ? (
-                <div className="px-2 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400/70 select-none">
-                  {group.title}
-                </div>
-              ) : groupIdx > 0 ? (
-                <div className="my-2 border-t border-slate-800/80" />
-              ) : null}
-
-              <div className="space-y-1">
-                {group.items.map((item) => renderLink(item, group.title))}
+          {/* 5 Pilares Fundamentais de Operação Diária */}
+          <div className="space-y-1">
+            {!isCollapsed && (
+              <div className="px-2 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-950 select-none">
+                Operação Principal
               </div>
+            )}
+            <div className="space-y-1">
+              {PRIMARY_ITEMS.map((item) => renderLink(item, "Operação"))}
             </div>
-          ))}
+          </div>
 
           {/* Divisor para ferramentas de apoio */}
-          <div className="pt-2 border-t border-slate-800/80">
+          <div className="pt-2 border-t border-[#8fa735]">
             {!isCollapsed && (
-              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 select-none">
+              <div className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 select-none">
                 Apoio & Sistema
               </div>
             )}
@@ -269,24 +281,24 @@ export function Sidebar({
 
         {/* Rodapé da Sidebar */}
         {isCollapsed ? (
-          <div className="p-3 border-t border-slate-800/80 bg-centi-950/80 flex items-center justify-center relative group">
-            <div className="w-3 h-3 rounded-full bg-emerald-400/20 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          <div className="p-3 border-t border-[#8fa735] bg-[#95ad38] flex items-center justify-center relative group">
+            <div className="w-3 h-3 rounded-full bg-white/40 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)]" />
             </div>
-            <div className="hidden lg:group-hover:flex absolute left-full bottom-2 ml-3 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-medium rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none flex-col">
-              <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <div className="hidden lg:group-hover:flex absolute left-full bottom-2 ml-3 px-3 py-1.5 bg-white text-slate-950 text-[11px] font-medium rounded-lg shadow-2xl border border-slate-200 whitespace-nowrap z-50 pointer-events-none flex-col">
+              <span className="text-slate-950 font-bold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#A2BB40]" />
                 Online
               </span>
-              <span className="text-slate-400 text-[10px] mt-0.5">NOP 001/2026 v12.5</span>
+              <span className="text-slate-600 text-[10px] mt-0.5">NOP 001/2026 v12.5</span>
             </div>
           </div>
         ) : (
-          <div className="p-3 border-t border-slate-800/80 bg-centi-950/80 text-[11px] text-slate-400">
+          <div className="p-3 border-t border-[#8fa735] bg-[#95ad38] text-[11px] text-slate-800">
             <div className="flex items-center justify-between">
-              <span>NOP 001/2026 v12.5</span>
-              <span className="text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="font-medium">NOP 001/2026 v12.5</span>
+              <span className="text-slate-950 flex items-center gap-1 font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
                 Online
               </span>
             </div>

@@ -80,12 +80,12 @@ export default async function ConfiguracoesPage({
             Banco de Dados
           </div>
           <div className="text-sm font-bold text-slate-900 mt-2">{dbType}</div>
-          <p className="text-[10px] text-emerald-600 font-medium mt-1">Conexão Prisma ativa</p>
+          <p className="text-[10px] text-centi-700 font-bold mt-1">Conexão Prisma ativa</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-            <HardDrive className="w-4 h-4 text-emerald-700" />
+            <HardDrive className="w-4 h-4 text-centi-700" />
             Repositório de Arquivos
           </div>
           <div className="text-sm font-bold text-slate-900 mt-2">
@@ -105,7 +105,7 @@ export default async function ConfiguracoesPage({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-            <FileCheck className="w-4 h-4 text-emerald-700" />
+            <FileCheck className="w-4 h-4 text-centi-700" />
             Rotina de Backup
           </div>
           <div className="text-sm font-bold text-slate-900 mt-2">Manifesto SHA-256</div>

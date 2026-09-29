@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { calculateAutonomyIndex } from "@/lib/domain/indicator-calculator";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 
 export default async function TreinamentosPage({
   searchParams,
@@ -142,7 +143,7 @@ export default async function TreinamentosPage({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabeçalho com Navegação de Módulo Integrada */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
@@ -152,6 +153,7 @@ export default async function TreinamentosPage({
             Projeto: <strong>{project.name}</strong>  |  Capacitação prática por módulo e avaliação individual de servidores
           </p>
         </div>
+        <ModuleNavTabs module="setores" />
       </div>
 
       {/* Cards de Métricas */}
@@ -172,13 +174,13 @@ export default async function TreinamentosPage({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Taxa de Presença Média</div>
-          <div className="text-2xl font-bold text-emerald-700 mt-1">{attendanceRate}%</div>
+          <div className="text-2xl font-bold text-centi-700 mt-1">{attendanceRate}%</div>
           <p className="text-[11px] text-slate-500 mt-1">{presentCount} presenças confirmadas</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs font-medium text-slate-500">Servidores Mapeados</div>
-          <div className="text-2xl font-bold text-emerald-700 mt-1">
+          <div className="text-2xl font-bold text-centi-700 mt-1">
             {municipalPersons.length}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">Pontos focais no município</p>
@@ -208,7 +210,7 @@ export default async function TreinamentosPage({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-slate-900">{tr.subject}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-centi-100 text-centi-900 border border-centi-300 font-bold">
                           {tr.moduleCode}
                         </span>
                         <StatusBadge status={tr.status} />
@@ -252,7 +254,7 @@ export default async function TreinamentosPage({
                                 <td className="p-1.5 font-medium text-slate-900">{att.person.name}</td>
                                 <td className="p-1.5">
                                   {att.isPresent ? (
-                                    <span className="text-emerald-700 font-bold">✓ Presente</span>
+                                    <span className="text-centi-700 font-bold">✓ Presente</span>
                                   ) : (
                                     <span className="text-red-600 font-medium">Ausente</span>
                                   )}

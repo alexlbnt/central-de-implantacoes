@@ -44,10 +44,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-100">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#f8faf9]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-centi-900 text-white shadow-md mb-4">
-          <Shield className="w-8 h-8 text-emerald-300" />
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-white shadow-md mb-4 ring-1 ring-slate-200 p-2.5">
+          <img src="/centi-logo.png" alt="Logo Centi" className="w-9 h-9 object-contain" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Central de Implantações
@@ -55,8 +55,8 @@ export default function LoginPage() {
         <p className="mt-1 text-sm text-slate-600">
           Governança Operacional e Metodologia Centi (NOP 001/2026)
         </p>
-        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-800">
-          <Shield className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-centi-100 border border-centi-300 text-[11px] font-semibold text-centi-900">
+          <Shield className="w-3.5 h-3.5 text-centi-700" />
           <span>Uso Interno Exclusivo: Equipe Técnica Centi</span>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu.nome@centi.com.br"
-                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-centi-600 sm:text-sm"
+                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-1 focus:ring-centi-500 sm:text-sm outline-none"
                 />
               </div>
             </div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-centi-600 sm:text-sm"
+                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-1 focus:ring-centi-500 sm:text-sm outline-none"
                 />
               </div>
             </div>
@@ -107,7 +107,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-centi-900 hover:bg-centi-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-centi-700 disabled:opacity-50 transition-colors"
+                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-centi-800 hover:bg-centi-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-centi-500 disabled:opacity-50 transition-colors"
               >
                 {loading ? (
                   <span>Autenticando...</span>
@@ -130,7 +130,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleFillDemo("alexandre.lider@centi.com.br", "Centi@123456")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
               >
                 <div className="font-medium text-slate-800">Líder Alexandre</div>
                 <div className="text-slate-500 text-[11px]">Líder de Implantação</div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleFillDemo("admin@centi.com.br", "Admin@Centi2026")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
               >
                 <div className="font-medium text-slate-800">Administrador PMO</div>
                 <div className="text-slate-500 text-[11px]">Gestão Geral</div>
@@ -146,7 +146,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleFillDemo("bruno.analista@centi.com.br", "Centi@123456")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
               >
                 <div className="font-medium text-slate-800">Analista Bruno</div>
                 <div className="text-slate-500 text-[11px]">Equipe de Campo</div>
@@ -154,7 +154,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleFillDemo("carlos.ba@centi.com.br", "Centi@123456")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
               >
                 <div className="font-medium text-slate-800">Carlos (BA)</div>
                 <div className="text-slate-500 text-[11px]">Business Analyst</div>

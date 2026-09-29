@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 
 export default async function RiscosPage({
   searchParams,
@@ -146,7 +147,7 @@ export default async function RiscosPage({
     if (exposure >= 5) {
       return <span className="px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-900 border border-amber-300">Médio ({exposure})</span>;
     }
-    return <span className="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">Baixo ({exposure})</span>;
+    return <span className="px-2 py-0.5 rounded font-bold bg-centi-100 text-centi-900 border border-centi-300">Baixo ({exposure})</span>;
   }
 
   // Prepara matriz 5x5
@@ -165,7 +166,7 @@ export default async function RiscosPage({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabeçalho com Navegação de Módulo Integrada */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
@@ -175,6 +176,7 @@ export default async function RiscosPage({
             Projeto: <strong>{project.name}</strong>  |  Matriz 5x5 de Probabilidade x Impacto e Escalação de Crise
           </p>
         </div>
+        <ModuleNavTabs module="pendencias" />
       </div>
 
       {/* Cards de Resumo */}
@@ -232,7 +234,7 @@ export default async function RiscosPage({
                       const exp = prob * imp;
                       const count = matrix[`${prob}-${imp}`] || 0;
 
-                      let cellBg = "bg-emerald-50 text-emerald-800 border-emerald-200";
+                      let cellBg = "bg-centi-50 text-centi-900 border-centi-200";
                       if (exp >= 17) cellBg = "bg-red-100 text-red-900 border-red-300 font-bold";
                       else if (exp >= 10) cellBg = "bg-orange-100 text-orange-900 border-orange-300 font-bold";
                       else if (exp >= 5) cellBg = "bg-amber-50 text-amber-900 border-amber-200";

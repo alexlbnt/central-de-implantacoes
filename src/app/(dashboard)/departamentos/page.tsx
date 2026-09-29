@@ -10,6 +10,7 @@ import {
   EntityAdminMenu,
   DepartmentAdminMenu,
 } from "@/components/departments/DepartmentEntityAdminManager";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 
 export default async function DepartamentosPage({
   searchParams,
@@ -85,7 +86,10 @@ export default async function DepartamentosPage({
               Projeto: <strong>{project.name}</strong>  |  Estrutura por Entidade (Prefeitura, Câmara e Autarquias).
             </p>
           </div>
-          <AdminTopActions />
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2.5">
+            <ModuleNavTabs module="setores" />
+            <AdminTopActions />
+          </div>
         </div>
 
         {/* Listagem Agrupada por Entidade */}

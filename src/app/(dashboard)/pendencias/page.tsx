@@ -10,6 +10,7 @@ import {
   Kanban,
   List,
 } from "lucide-react";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 
 export default async function PendenciasPage({
   searchParams,
@@ -100,7 +101,7 @@ export default async function PendenciasPage({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabeçalho com Navegação de Módulo Integrada */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
@@ -111,25 +112,33 @@ export default async function PendenciasPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <ModuleNavTabs module="pendencias" />
+      </div>
+
+      {/* Barra de Ações & Alternador */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
           {/* Alternador Lista / Kanban */}
           <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100 text-xs">
             <Link
               href={`/pendencias?projectId=${project.id}&view=lista`}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium ${
-                !isKanban ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                !isKanban
+                  ? "bg-white text-centi-900 shadow-xs border border-centi-400/40 ring-1 ring-centi-400/30"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <List className="w-3.5 h-3.5" />
+              <List className={`w-3.5 h-3.5 ${!isKanban ? "text-centi-600" : "text-slate-500"}`} />
               <span>Lista</span>
             </Link>
             <Link
               href={`/pendencias?projectId=${project.id}&view=kanban`}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium ${
-                isKanban ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold transition-all ${
+                isKanban
+                  ? "bg-white text-centi-900 shadow-xs border border-centi-400/40 ring-1 ring-centi-400/30"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <Kanban className="w-3.5 h-3.5" />
+              <Kanban className={`w-3.5 h-3.5 ${isKanban ? "text-centi-600" : "text-slate-500"}`} />
               <span>Kanban</span>
             </Link>
           </div>
@@ -144,7 +153,6 @@ export default async function PendenciasPage({
             <span>Exportar CSV</span>
           </a>
         </div>
-      </div>
 
       {/* Formulário Rápido de Nova Pendência */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -163,13 +171,13 @@ export default async function PendenciasPage({
               name="title"
               required
               placeholder="Ex: Divergência na tabela salarial"
-              className="w-full p-2 border border-slate-300 rounded-lg text-xs"
+              className="w-full p-2 border border-slate-300 rounded-lg text-xs focus:border-centi-600 focus:ring-1 focus:ring-centi-500 outline-none"
             />
           </div>
 
           <div>
             <label className="block font-medium text-slate-700 mb-1">Departamento</label>
-            <select name="departmentId" className="w-full p-2 border border-slate-300 rounded-lg text-xs">
+            <select name="departmentId" className="w-full p-2 border border-slate-300 rounded-lg text-xs focus:border-centi-600 focus:ring-1 focus:ring-centi-500 outline-none">
               <option value="">Geral do Projeto</option>
               {allDepts.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
@@ -179,7 +187,7 @@ export default async function PendenciasPage({
 
           <div>
             <label className="block font-medium text-slate-700 mb-1">Prioridade</label>
-            <select name="priority" defaultValue="MEDIA" className="w-full p-2 border border-slate-300 rounded-lg text-xs">
+            <select name="priority" defaultValue="MEDIA" className="w-full p-2 border border-slate-300 rounded-lg text-xs focus:border-centi-600 focus:ring-1 focus:ring-centi-500 outline-none">
               <option value="BAIXA">Baixa</option>
               <option value="MEDIA">Média</option>
               <option value="ALTA">Alta</option>
@@ -192,7 +200,7 @@ export default async function PendenciasPage({
             <input
               type="date"
               name="dueDate"
-              className="w-full p-2 border border-slate-300 rounded-lg text-xs"
+              className="w-full p-2 border border-slate-300 rounded-lg text-xs focus:border-centi-600 focus:ring-1 focus:ring-centi-500 outline-none"
             />
           </div>
 
@@ -208,7 +216,7 @@ export default async function PendenciasPage({
             </label>
             <button
               type="submit"
-              className="w-full py-2 px-3 bg-centi-900 hover:bg-centi-950 text-white rounded-lg font-medium text-xs shadow-xs"
+              className="w-full py-2 px-3 bg-centi-800 hover:bg-centi-900 text-white rounded-lg font-bold text-xs shadow-xs transition-colors"
             >
               Registrar
             </button>

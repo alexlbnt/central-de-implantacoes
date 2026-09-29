@@ -24,6 +24,7 @@ import {
   validateBusinessRuleAction,
   deleteBusinessRuleAction,
 } from "@/lib/actions/rule-actions";
+import { ModuleNavTabs } from "@/components/layout/ModuleNavTabs";
 
 export interface DepartmentOption {
   id: string;
@@ -203,7 +204,7 @@ export function WikiRulesManager({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabeçalho com Navegação de Módulo Integrada */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
@@ -213,6 +214,7 @@ export function WikiRulesManager({
             Projeto: <strong>{projectName}</strong> | Vínculo direto com Departamentos e separação entre relato verbal e parecer Centi
           </p>
         </div>
+        <ModuleNavTabs module="setores" />
       </div>
 
       {/* Grid Principal: Listagem & Formulário de Cadastro */}
@@ -317,8 +319,8 @@ export function WikiRulesManager({
                               {CATEGORY_LABELS[rule.category] || rule.category}
                             </span>
                             {departmentDisplayName ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                <Building2 className="w-3 h-3 text-emerald-600" />
+                              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded font-semibold bg-centi-100 text-centi-900 border border-centi-300">
+                                <Building2 className="w-3 h-3 text-centi-700" />
                                 {departmentDisplayName}
                               </span>
                             ) : (
@@ -341,7 +343,7 @@ export function WikiRulesManager({
                         </div>
                       </div>
 
-                      {/* Relato Verbal (Amarelo) vs Parecer Técnico (Verde) */}
+                      {/* Relato Verbal (Amarelo) vs Parecer Técnico (Verde-limão/Oliva) */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                         {/* Bloco 1: Relato Verbal */}
                         <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/80 space-y-1">
@@ -355,9 +357,9 @@ export function WikiRulesManager({
                         </div>
 
                         {/* Bloco 2: Parecer Técnico Centi */}
-                        <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/80 space-y-1">
-                          <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-[11px]">
-                            <Scale className="w-3.5 h-3.5 text-emerald-700" />
+                        <div className="p-3 rounded-lg bg-centi-50/70 border border-centi-200/80 space-y-1">
+                          <div className="flex items-center gap-1.5 font-bold text-centi-950 text-[11px]">
+                            <Scale className="w-3.5 h-3.5 text-centi-700" />
                             Parecer Técnico Centi & Base Legal
                           </div>
                           {rule.technicalOpinion ? (
@@ -370,7 +372,7 @@ export function WikiRulesManager({
                             </p>
                           )}
                           {rule.validatorName && (
-                            <div className="text-[10px] text-emerald-700 pt-1 font-medium flex items-center gap-1">
+                            <div className="text-[10px] text-centi-700 pt-1 font-medium flex items-center gap-1">
                               <UserCheck className="w-3 h-3" />
                               Homologado por: {rule.validatorName}
                             </div>
@@ -404,7 +406,7 @@ export function WikiRulesManager({
                               type="button"
                               disabled={isPendingAction}
                               onClick={() => handleValidate(rule.id)}
-                              className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-2xs transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-centi-800 hover:bg-centi-900 text-white rounded-lg text-xs font-bold shadow-2xs transition-colors disabled:opacity-50"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               Validar e Homologar
@@ -448,8 +450,8 @@ export function WikiRulesManager({
           )}
 
           {createSuccess && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+            <div className="p-3 bg-centi-50 border border-centi-200 rounded-lg text-xs text-centi-950 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-centi-700" />
               <span>{createSuccess}</span>
             </div>
           )}
@@ -535,14 +537,14 @@ export function WikiRulesManager({
             </div>
 
             <div>
-              <label className="block font-medium text-emerald-950 mb-1">
+              <label className="block font-medium text-centi-950 mb-1">
                 Parecer Técnico Centi & Base Legal (Lei Municipal / Padrão Centi)
               </label>
               <textarea
                 name="technicalOpinion"
                 rows={3}
                 placeholder="Artigo da Lei Municipal, viabilidade no ERP, regras de cálculo e impacto em parametrização..."
-                className="w-full p-2 border border-emerald-300 bg-emerald-50/40 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full p-2 border border-centi-300 bg-centi-50/40 rounded-lg text-xs focus:ring-2 focus:ring-centi-600 focus:outline-none"
               />
             </div>
 
@@ -579,7 +581,7 @@ export function WikiRulesManager({
                 onClick={() => setEditingRule(null)}
                 className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -696,7 +698,7 @@ export function WikiRulesManager({
 
               {/* Parecer Técnico Centi */}
               <div>
-                <label className="block font-medium text-emerald-950 mb-1">
+                <label className="block font-medium text-centi-950 mb-1">
                   Parecer Técnico Centi & Base Legal (Lei Municipal / Padrão Centi)
                 </label>
                 <textarea
@@ -704,7 +706,7 @@ export function WikiRulesManager({
                   rows={4}
                   defaultValue={editingRule.technicalOpinion || ""}
                   placeholder="Artigo da Lei Municipal, viabilidade no ERP, impacto em parametrização..."
-                  className="w-full p-2.5 border border-emerald-300 bg-emerald-50/40 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full p-2.5 border border-centi-300 bg-centi-50/40 rounded-lg text-xs focus:ring-2 focus:ring-centi-600 focus:outline-none"
                 />
               </div>
 
