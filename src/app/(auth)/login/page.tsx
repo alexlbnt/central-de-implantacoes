@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { LogIn, AlertCircle, CheckCircle2, Shield } from "lucide-react";
@@ -47,7 +48,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#f8faf9]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-white shadow-md mb-4 ring-1 ring-slate-200 p-2.5">
-          <img src="/centi-logo.png" alt="Logo Centi" className="w-9 h-9 object-contain" />
+          <Image src="/centi-logo.png" alt="Logo Centi" width={36} height={36} className="w-9 h-9 object-contain" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Central de Implantações

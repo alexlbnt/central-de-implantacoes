@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -191,9 +192,11 @@ export function Sidebar({
               title="Expandir menu lateral (Ctrl+B)"
               aria-label="Expandir menu lateral"
             >
-              <img
+              <Image
                 src="/centi-logo.png"
                 alt="Logo Centi"
+                width={20}
+                height={20}
                 className="w-5 h-5 object-contain group-hover:hidden transition-transform"
               />
               <ChevronRight className="w-5 h-5 text-slate-900 hidden group-hover:block transition-transform animate-in fade-in" />
@@ -209,9 +212,11 @@ export function Sidebar({
           <div className="h-16 flex items-center justify-between px-3.5 border-b border-[#8fa735] bg-[#95ad38]">
             <Link href="/" className="flex items-center gap-2.5 min-w-0 group">
               <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm ring-1 ring-black/5 flex-shrink-0 hover:bg-slate-50 transition-colors p-1.5">
-                <img
+                <Image
                   src="/centi-logo.png"
                   alt="Logo Centi"
+                  width={20}
+                  height={20}
                   className="w-5 h-5 object-contain"
                 />
               </div>

@@ -68,7 +68,7 @@ export default async function GovernancaPage({
   }
 
   const totalMeetings = project.meetings.length;
-  const finalizedMeetings = project.meetings.filter((m) => m.status === "FINALIZADA").length;
+  const finalizedMeetings = project.meetings.filter((m) => m.status !== "RASCUNHO").length;
   const draftMeetings = project.meetings.filter((m) => m.status === "RASCUNHO").length;
 
   return (
