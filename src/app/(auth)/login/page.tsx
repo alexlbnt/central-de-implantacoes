@@ -13,6 +13,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Garante que os campos iniciem sempre vazios, prevenindo injeções indesejadas de extensões e navegadores
+  React.useEffect(() => {
+    setEmail("");
+    setPassword("");
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -65,7 +71,11 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+            {/* Campos ocultos para absorver preenchimento forçado de navegadores */}
+            <input type="text" name="centi_autofill_absorber_user" className="hidden" tabIndex={-1} aria-hidden="true" autoComplete="off" />
+            <input type="password" name="centi_autofill_absorber_pass" className="hidden" tabIndex={-1} aria-hidden="true" autoComplete="new-password" />
+
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 E-mail Corporativo (@centi.com.br)
@@ -73,11 +83,17 @@ export default function LoginPage() {
               <div className="mt-1">
                 <input
                   type="email"
+                  name="centi_user_login_email"
+                  id="centi_user_login_email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu.nome@centi.com.br"
-                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-1 focus:ring-centi-500 sm:text-sm outline-none"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-1 focus:ring-centi-500 sm:text-sm outline-none bg-white"
                 />
               </div>
             </div>
@@ -89,11 +105,14 @@ export default function LoginPage() {
               <div className="mt-1">
                 <input
                   type="password"
+                  name="centi_user_login_password"
+                  id="centi_user_login_password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-1 focus:ring-centi-500 sm:text-sm outline-none"
+                  autoComplete="new-password"
+                  className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-centi-600 focus:ring-1 focus:ring-centi-500 sm:text-sm outline-none bg-white"
                 />
               </div>
             </div>
