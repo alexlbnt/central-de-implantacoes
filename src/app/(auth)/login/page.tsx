@@ -38,12 +38,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleFillDemo = (userEmail: string, userPass: string) => {
-    setEmail(userEmail);
-    setPassword(userPass);
-    setError(null);
-  };
-
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#f8faf9]">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
@@ -121,50 +115,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Atalhos Rápidos para Demonstração */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              Acesso Rápido (Perfis Centi Homologados)
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleFillDemo("alexandre.lider@centi.com.br", "Centi@123456")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
-              >
-                <div className="font-medium text-slate-800">Líder Alexandre</div>
-                <div className="text-slate-500 text-[11px]">Líder de Implantação</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo("admin@centi.com.br", "Admin@Centi2026")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
-              >
-                <div className="font-medium text-slate-800">Administrador PMO</div>
-                <div className="text-slate-500 text-[11px]">Gestão Geral</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo("bruno.analista@centi.com.br", "Centi@123456")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
-              >
-                <div className="font-medium text-slate-800">Analista Bruno</div>
-                <div className="text-slate-500 text-[11px]">Equipe de Campo</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo("carlos.ba@centi.com.br", "Centi@123456")}
-                className="p-2 text-left rounded-lg bg-slate-50 hover:bg-centi-50/80 hover:border-centi-300 border border-slate-200 transition-colors"
-              >
-                <div className="font-medium text-slate-800">Carlos (BA)</div>
-                <div className="text-slate-500 text-[11px]">Business Analyst</div>
-              </button>
-            </div>
-            <p className="mt-3 text-[11px] text-slate-400 text-center italic">
-              Clientes e servidores da prefeitura não possuem usuário nem acesso à Central.
-            </p>
-          </div>
         </div>
 
         <p className="mt-4 text-center text-xs text-slate-500">
