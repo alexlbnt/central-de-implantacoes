@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { BannerDemo } from "../ui/BannerDemo";
@@ -22,6 +23,17 @@ export function AppLayout({
 }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const searchParams = useSearchParams();
+
+  const urlProjectId = searchParams?.get("projectId");
+  const activeProjectId = urlProjectId || currentProjectId;
+  const currentProj =
+    projects.find((p) => p.id === activeProjectId) ||
+    projects.find((p) => p.id === currentProjectId) ||
+    projects[0];
+
+  const showDemoBanner = currentProj?.isDemo ?? isDemoProject;
+  const activeProjectName = currentProj?.name ?? projectName;
 
   // Carrega a preferência de retrair a aba salva pelo usuário
   useEffect(() => {
@@ -60,7 +72,7 @@ export function AppLayout({
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Banner de Demonstração quando aplicável */}
-      {isDemoProject && <BannerDemo projectName={projectName} />}
+      {showDemoBanner && <BannerDemo projectName={activeProjectName} />}
 
       <div className="flex flex-1">
         {/* Sidebar retrátil para desktop e drawer para mobile */}
@@ -82,7 +94,7 @@ export function AppLayout({
             onToggleCollapse={toggleCollapse}
             isCollapsed={isCollapsed}
             projects={projects}
-            currentProjectId={currentProjectId}
+            currentProjectId={activeProjectId}
           />
 
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">

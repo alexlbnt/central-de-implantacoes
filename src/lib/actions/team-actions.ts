@@ -516,12 +516,28 @@ export async function createMunicipalPersonAction(formData: FormData): Promise<v
   const phone = (formData.get("phone") as string)?.trim();
   const roleTitle = (formData.get("roleTitle") as string)?.trim();
   const notes = (formData.get("notes") as string)?.trim();
+  const departmentId = (formData.get("departmentId") as string)?.trim();
+  const projectId = (formData.get("projectId") as string)?.trim();
+  const isTitular = formData.get("isTitular") === "true" || formData.get("isTitular") === "on";
 
   if (!name) {
     throw new Error("Nome do contato municipal é obrigatório.");
   }
 
-  await prisma.person.create({
+  // Define conexões com departamentos para que o ponto focal seja listado no município
+  let keyUserConnect: { id: string }[] = [];
+
+  if (departmentId && departmentId !== "all") {
+    keyUserConnect = [{ id: departmentId }];
+  } else if (projectId) {
+    const projectDepts = await prisma.department.findMany({
+      where: { entity: { projectId } },
+      select: { id: true },
+    });
+    keyUserConnect = projectDepts.map((d) => ({ id: d.id }));
+  }
+
+  const createdPerson = await prisma.person.create({
     data: {
       name,
       email: email || null,
@@ -529,9 +545,50 @@ export async function createMunicipalPersonAction(formData: FormData): Promise<v
       roleTitle: roleTitle || "Servidor Municipal",
       isMunicipal: true,
       notes: notes || null,
+      ...(keyUserConnect.length > 0
+        ? {
+            keyUserDepartments: {
+              connect: keyUserConnect,
+            },
+          }
+        : {}),
     },
   });
 
+  // Se marcado como responsável titular do setor específico
+  if (departmentId && departmentId !== "all" && isTitular) {
+    await prisma.department.update({
+      where: { id: departmentId },
+      data: { municipalResponsibleId: createdPerson.id },
+    });
+  }
+
   revalidatePath("/equipe");
+  revalidatePath("/departamentos");
+}
+
+/**
+ * Server Action: Excluir Contato Municipal
+ */
+export async function deleteMunicipalPersonAction(formData: FormData): Promise<void> {
+  const personId = (formData.get("personId") as string)?.trim();
+  if (!personId) return;
+
+  // Desvincula dependências em departamentos antes da remoção
+  await prisma.department.updateMany({
+    where: { municipalResponsibleId: personId },
+    data: { municipalResponsibleId: null },
+  });
+  await prisma.department.updateMany({
+    where: { municipalSubstituteId: personId },
+    data: { municipalSubstituteId: null },
+  });
+
+  await prisma.person.delete({
+    where: { id: personId },
+  });
+
+  revalidatePath("/equipe");
+  revalidatePath("/departamentos");
 }
 

@@ -12,6 +12,7 @@ import {
   UserPlus,
   Briefcase,
   UserCheck,
+  Trash2,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
@@ -19,7 +20,10 @@ import {
   AddTeamMemberButton,
   TeamMemberItemActions,
 } from "@/components/team/TeamMemberAdminManager";
-import { createMunicipalPersonAction } from "@/lib/actions/team-actions";
+import {
+  createMunicipalPersonAction,
+  deleteMunicipalPersonAction,
+} from "@/lib/actions/team-actions";
 
 export default async function EquipePage({
   searchParams,
@@ -95,11 +99,18 @@ export default async function EquipePage({
           { substituteDepartments: { some: { id: { in: projectDeptIds } } } },
           { keyUserDepartments: { some: { id: { in: projectDeptIds } } } },
           { trainingAttendances: { some: { training: { projectId: project.id } } } },
+          {
+            responsibleDepartments: { none: {} },
+            substituteDepartments: { none: {} },
+            keyUserDepartments: { none: {} },
+            trainingAttendances: { none: {} },
+          },
         ],
       },
       include: {
         responsibleDepartments: true,
         substituteDepartments: true,
+        keyUserDepartments: true,
       },
       orderBy: { name: "asc" },
     });
@@ -284,6 +295,18 @@ export default async function EquipePage({
                       <div className="font-bold text-xs text-slate-900">{p.name}</div>
                       <div className="text-[11px] font-semibold text-centi-800">{p.roleTitle}</div>
                     </div>
+                    {canManageTeam && (
+                      <form action={deleteMunicipalPersonAction}>
+                        <input type="hidden" name="personId" value={p.id} />
+                        <button
+                          type="submit"
+                          className="text-slate-400 hover:text-red-600 p-1 rounded transition-colors"
+                          title="Excluir Ponto Focal"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </form>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pt-1 border-t border-slate-100">
@@ -302,9 +325,22 @@ export default async function EquipePage({
                   </div>
 
                   {(p.responsibleDepartments || []).length > 0 && (
-                    <div className="text-[10px] text-slate-500">
-                      <strong>Responsável Titular:</strong>{" "}
-                      {(p.responsibleDepartments || []).map((d: any) => d?.name).filter(Boolean).join(", ")}
+                    <div className="text-[10px] text-slate-600">
+                      <strong className="text-slate-700">Responsável Titular:</strong>{" "}
+                      <span className="text-centi-900 font-semibold">
+                        {(p.responsibleDepartments || []).map((d: any) => d?.name).filter(Boolean).join(", ")}
+                      </span>
+                    </div>
+                  )}
+
+                  {(p.keyUserDepartments || []).length > 0 && (
+                    <div className="text-[10px] text-slate-600">
+                      <strong className="text-slate-700">Setores Vinculados:</strong>{" "}
+                      <span className="text-slate-700">
+                        {(p.keyUserDepartments || []).length === projectDepartments.length
+                          ? "Geral (Todos os setores municipais)"
+                          : (p.keyUserDepartments || []).map((d: any) => d?.name).filter(Boolean).join(", ")}
+                      </span>
                     </div>
                   )}
 
@@ -325,6 +361,8 @@ export default async function EquipePage({
               Cadastrar Ponto Focal Municipal
             </h3>
             <form action={createMunicipalPersonAction} className="space-y-2 text-xs">
+              <input type="hidden" name="projectId" value={project.id} />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <input
@@ -365,6 +403,34 @@ export default async function EquipePage({
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <select
+                    name="departmentId"
+                    defaultValue="all"
+                    className="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-800"
+                  >
+                    <option value="all">Setor: Geral (Todos os Setores)</option>
+                    {projectDepartments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} ({dept.entityName})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 px-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-[11px] text-slate-700">
+                    <input
+                      type="checkbox"
+                      name="isTitular"
+                      value="true"
+                      className="rounded border-slate-300 text-centi-800 focus:ring-centi-500 w-3.5 h-3.5"
+                    />
+                    <span>Definir como Responsável Titular do setor</span>
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <input
                   type="text"
@@ -376,7 +442,7 @@ export default async function EquipePage({
 
               <button
                 type="submit"
-                className="w-full py-1.5 bg-centi-800 hover:bg-centi-900 text-white rounded-lg text-xs font-bold transition-colors"
+                className="w-full py-1.5 bg-centi-800 hover:bg-centi-900 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
               >
                 Salvar Ponto Focal
               </button>

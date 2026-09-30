@@ -3,7 +3,7 @@ import { configureDatabase } from "./configure-db";
 
 configureDatabase();
 
-console.log("\n?? Iniciando servidor de desenvolvimento Next.js na porta 3000...\n");
+console.log("\n🚀 Iniciando servidor de desenvolvimento Next.js na porta 3000...\n");
 
 const nextProcess = spawn("npx next dev -p 3000", {
   stdio: "inherit",
