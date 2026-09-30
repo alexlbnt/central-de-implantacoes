@@ -145,7 +145,24 @@ export function evaluateDepartmentOperationalStatus(
     };
   }
 
-  // 2. NÃO AVALIADO: não existe diagnóstico inicial suficiente ou escopo crítico não foi definido
+  // 2. HOMOLOGADO SEM PROCESSOS: Quando o departamento tem 0 processos críticos cadastrados,
+  // mas foi formalmente homologado pelo Líder ou Administrador, considera-se implantado com sucesso
+  if (input.isLeaderValidated && totalProcesses === 0) {
+    return {
+      status: DepartmentStatus.OPERACIONAL,
+      revalidationRequired: false,
+      revalidationReasons: [],
+      blockerReasons: [],
+      missingOperationalCriteria: [],
+      activeBlockersCount: 0,
+      processesApprovedCount: 0,
+      processesTotalCount: 0,
+      autonomyApprovedCount: 0,
+      autonomyTotalCount: 0,
+    };
+  }
+
+  // 3. NÃO AVALIADO: não existe diagnóstico inicial suficiente ou escopo crítico não foi definido (e não foi homologado)
   if (!input.hasDiagnosis || totalProcesses === 0) {
     return {
       status: DepartmentStatus.NAO_AVALIADO,

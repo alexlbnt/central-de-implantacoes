@@ -170,9 +170,10 @@ describe("Motor de Situação Operacional dos Departamentos", () => {
     expect(result.status).not.toBe(DepartmentStatus.OPERACIONAL);
   });
 
-  it("Sem diagnóstico inicial registrado ou sem processos críticos cadastrados, deve retornar NAO_AVALIADO", () => {
+  it("Sem diagnóstico inicial registrado ou sem processos críticos cadastrados (não homologado), deve retornar NAO_AVALIADO", () => {
     const inputNoDiagnosis: DepartmentEvaluationInput = {
       ...baseInput,
+      isLeaderValidated: false,
       hasDiagnosis: false,
     };
 
@@ -181,10 +182,22 @@ describe("Motor de Situação Operacional dos Departamentos", () => {
 
     const inputNoProcesses: DepartmentEvaluationInput = {
       ...baseInput,
+      isLeaderValidated: false,
       criticalProcesses: [],
     };
 
     const result2 = evaluateDepartmentOperationalStatus(inputNoProcesses);
     expect(result2.status).toBe(DepartmentStatus.NAO_AVALIADO);
+  });
+
+  it("Quando o Departamento for Homologado pelo Líder, deve alterar de NAO_AVALIADO para OPERACIONAL (implantado com sucesso)", () => {
+    const inputHomologadoSemProcessos: DepartmentEvaluationInput = {
+      ...baseInput,
+      isLeaderValidated: true,
+      criticalProcesses: [],
+    };
+
+    const result = evaluateDepartmentOperationalStatus(inputHomologadoSemProcessos);
+    expect(result.status).toBe(DepartmentStatus.OPERACIONAL);
   });
 });
