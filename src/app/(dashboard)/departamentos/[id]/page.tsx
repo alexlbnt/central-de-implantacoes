@@ -26,12 +26,15 @@ import {
 
 export default async function DepartmentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ error?: string; success?: string }>;
 }) {
   const user = await getCurrentUser();
   const context = await getCurrentUserContext();
   const { id } = await params;
+  const sp = searchParams ? await searchParams : {};
 
   let dept = null;
   try {
@@ -119,7 +122,7 @@ export default async function DepartmentDetailPage({
   const isAdmin = user?.role === "ADMIN_GERAL";
   const isLeader = dept.entity.project.memberships.some(
     (m) => m.userId === user?.id && m.role === "LIDER_PROJETO"
-  ) || isAdmin;
+  );
 
   const [moduleCatalog, persons, allEntities] = await Promise.all([
     isAdmin
@@ -223,45 +226,50 @@ export default async function DepartmentDetailPage({
   async function validateLeaderAction(formData: FormData) {
     "use server";
     const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("Não autenticado");
+    if (!currentUser) redirect("/login");
     const currentContext = await getCurrentUserContext();
-    if (!currentContext) throw new Error("Sessão inválida");
+    if (!currentContext) redirect("/login");
 
     // Validação estrita de autorização: somente Líder de Implantação designado no projeto
     const readinessCheck = AuthGuard.canValidateReadiness(currentContext, projectId);
     if (!readinessCheck.allowed) {
-      throw new Error(readinessCheck.reason || "Somente o Líder de Implantação do projeto possui prerrogativa para validar a prontidão.");
+      redirect(`/departamentos/${id}?error=${encodeURIComponent(readinessCheck.reason || "Somente o Líder de Implantação do projeto possui prerrogativa para homologar tecnicamente.")}`);
     }
 
-    await prisma.department.update({
-      where: { id },
-      data: {
-        isLeaderValidated: true,
-        leaderValidatedAt: new Date(),
-        leaderValidatorName: currentUser.name,
-      },
-    });
+    try {
+      await prisma.department.update({
+        where: { id },
+        data: {
+          isLeaderValidated: true,
+          leaderValidatedAt: new Date(),
+          leaderValidatorName: currentUser.name,
+        },
+      });
 
-    // Registra auditoria
-    await prisma.auditLog.create({
-      data: {
-        organizationId: currentUser.organizationId,
-        projectId: projectId,
-        actorId: currentUser.id,
-        actorName: currentUser.name,
-        action: "VALIDATE",
-        targetType: "Department",
-        targetId: id,
-        justification: "Validação técnica formal de prontidão concedida pelo Líder.",
-      },
-    });
+      // Registra auditoria
+      await prisma.auditLog.create({
+        data: {
+          organizationId: currentUser.organizationId,
+          projectId: projectId,
+          actorId: currentUser.id,
+          actorName: currentUser.name,
+          action: "VALIDATE",
+          targetType: "Department",
+          targetId: id,
+          justification: "Validação técnica formal de prontidão concedida pelo Líder.",
+        },
+      });
 
-    // Recalcula o status operacional para promover a OPERACIONAL se todos os critérios cumulativos forem atendidos
-    await recalculateDepartmentOperationalStatus(id);
+      // Recalcula o status operacional para promover a OPERACIONAL se todos os critérios cumulativos forem atendidos
+      await recalculateDepartmentOperationalStatus(id);
 
-    revalidatePath(`/departamentos/${id}`);
-    revalidatePath("/departamentos");
-    revalidatePath("/");
+      revalidatePath(`/departamentos/${id}`);
+      revalidatePath("/departamentos");
+      revalidatePath("/");
+    } catch (err: any) {
+      console.error("Erro ao validar homologação como líder:", err);
+      redirect(`/departamentos/${id}?error=${encodeURIComponent("Ocorreu um erro ao processar a validação do líder.")}`);
+    }
   }
 
   // Server Action para Alternar Critérios Prévios (Migração, Parametrização, Treinamento)
@@ -358,6 +366,13 @@ export default async function DepartmentDetailPage({
             />
           </div>
         </div>
+
+        {sp.error && (
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5 shadow-xs">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span className="font-medium">{sp.error}</span>
+          </div>
+        )}
 
       {/* Grid de 2 Colunas: Checklist dos 5 Critérios + Ações */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -475,11 +490,24 @@ export default async function DepartmentDetailPage({
                   <form action={validateLeaderAction}>
                     <button
                       type="submit"
-                      className="px-3 py-1 rounded-md text-xs font-bold bg-centi-800 text-white hover:bg-centi-900 transition-colors shadow-xs"
+                      className="px-3 py-1 rounded-md text-xs font-bold bg-centi-800 text-white hover:bg-centi-900 transition-colors shadow-xs cursor-pointer"
                     >
                       Homologar como Líder
                     </button>
                   </form>
+                ) : isAdmin ? (
+                  <div className="flex flex-col items-end text-right gap-1 max-w-xs">
+                    <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      Ato Privativo do Líder do Projeto
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      Como Administrador, vincule-se como Líder em{" "}
+                      <Link href="/equipe" className="text-centi-800 underline font-semibold hover:text-centi-900">
+                        Equipe &amp; Contatos
+                      </Link>{" "}
+                      para homologar.
+                    </span>
+                  </div>
                 ) : (
                   <span className="text-xs text-slate-500 italic">
                     Requer permissão de Líder
