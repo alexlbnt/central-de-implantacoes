@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getCurrentUser, getCurrentUserContext } from "@/lib/auth/server-session";
 import prisma from "@/lib/db/prisma";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -17,6 +17,7 @@ import {
   Play,
   UserCheck,
   AlertOctagon,
+  Building2,
 } from "lucide-react";
 import {
   DepartmentEntityAdminProvider,
@@ -32,38 +33,67 @@ export default async function DepartmentDetailPage({
   const context = await getCurrentUserContext();
   const { id } = await params;
 
-  const dept = await prisma.department.findUnique({
-    where: { id },
-    include: {
-      entity: {
-        include: {
-          project: {
-            include: {
-              memberships: true,
+  let dept = null;
+  try {
+    dept = await prisma.department.findUnique({
+      where: { id },
+      include: {
+        entity: {
+          include: {
+            project: {
+              include: {
+                memberships: true,
+              },
             },
           },
         },
-      },
-      municipalResponsible: true,
-      municipalSubstitute: true,
-      criticalProcesses: {
-        include: {
-          testExecutions: { orderBy: { executedAt: "desc" } },
-          autonomyReqs: { include: { person: true } },
+        municipalResponsible: true,
+        municipalSubstitute: true,
+        criticalProcesses: {
+          include: {
+            testExecutions: { orderBy: { executedAt: "desc" } },
+            autonomyReqs: { include: { person: true } },
+          },
         },
+        modules: true,
+        deliverables: true,
+        issues: {
+          where: { status: { notIn: ["CONCLUIDA", "CANCELADA"] } },
+          include: { author: true },
+        },
+        diaries: { take: 5, orderBy: { entryDate: "desc" } },
       },
-      modules: true,
-      deliverables: true,
-      issues: {
-        where: { status: { notIn: ["CONCLUIDA", "CANCELADA"] } },
-        include: { author: true },
-      },
-      diaries: { take: 5, orderBy: { entryDate: "desc" } },
-    },
-  });
+    });
+  } catch (err) {
+    console.error("Erro ao buscar departamento por ID:", id, err);
+    dept = null;
+  }
 
   if (!dept) {
-    notFound();
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-4">
+          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-lg font-bold text-slate-900">Departamento Não Encontrado</h1>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              O setor solicitado não foi localizado no sistema, pode ter sido removido ou o identificador na URL é inválido.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/departamentos"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-centi-800 hover:bg-centi-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Voltar para Setores e Departamentos</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Verificação estrita de IDOR e acesso setorial (Critério 03)
