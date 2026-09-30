@@ -122,7 +122,7 @@ export default async function DepartmentDetailPage({
   const isAdmin = user?.role === "ADMIN_GERAL";
   const isLeader = dept.entity.project.memberships.some(
     (m) => m.userId === user?.id && m.role === "LIDER_PROJETO"
-  );
+  ) || isAdmin;
 
   const [moduleCatalog, persons, allEntities] = await Promise.all([
     isAdmin
@@ -495,22 +495,9 @@ export default async function DepartmentDetailPage({
                       Homologar como Líder
                     </button>
                   </form>
-                ) : isAdmin ? (
-                  <div className="flex flex-col items-end text-right gap-1 max-w-xs">
-                    <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                      Ato Privativo do Líder do Projeto
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      Como Administrador, vincule-se como Líder em{" "}
-                      <Link href="/equipe" className="text-centi-800 underline font-semibold hover:text-centi-900">
-                        Equipe &amp; Contatos
-                      </Link>{" "}
-                      para homologar.
-                    </span>
-                  </div>
                 ) : (
                   <span className="text-xs text-slate-500 italic">
-                    Requer permissão de Líder
+                    Requer permissão de Líder ou Administrador
                   </span>
                 )}
               </div>

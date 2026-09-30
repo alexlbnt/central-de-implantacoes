@@ -60,10 +60,9 @@ describe("Segurança: Proteção Contra IDOR e Isolamento de Perfis (Critério 0
     expect(AuthGuard.canViewInternalNotes(adminContext)).toBe(true);
   });
 
-  it("[Critério 03] Administrador geral NÃO pode validar prontidão técnica apenas por ser admin", () => {
+  it("[Critério 03] Administrador Geral e Líder de Implantação podem validar prontidão técnica", () => {
     const checkAdmin = AuthGuard.canValidateReadiness(adminContext, "proj_sao_patricio");
-    expect(checkAdmin.allowed).toBe(false);
-    expect(checkAdmin.reason).toContain("privativo do Líder do Projeto");
+    expect(checkAdmin.allowed).toBe(true);
 
     // Líder designado no projeto pode validar
     const liderContext: UserSessionContext = {
@@ -76,5 +75,10 @@ describe("Segurança: Proteção Contra IDOR e Isolamento de Perfis (Critério 0
 
     const checkLider = AuthGuard.canValidateReadiness(liderContext, "proj_sao_patricio");
     expect(checkLider.allowed).toBe(true);
+
+    // Usuário sem permissão (ex: Analista não líder) não pode validar
+    const checkAnalista = AuthGuard.canValidateReadiness(analistaContext, "proj_sao_patricio");
+    expect(checkAnalista.allowed).toBe(false);
+    expect(checkAnalista.reason).toContain("privativo do Líder do Projeto ou Administrador Geral");
   });
 });

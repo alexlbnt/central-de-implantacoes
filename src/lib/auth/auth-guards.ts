@@ -85,10 +85,14 @@ export class AuthGuard {
   }
 
   /**
-   * Verifica permissão para validação técnica formal de prontidão (exclusiva do Líder do projeto).
-   * Administrador geral NÃO tem prerrogativa de atestar tecnicamente sem o papel de Líder.
+   * Verifica permissão para validação técnica formal de prontidão.
+   * Permitido para o Administrador Geral (ADMIN_GERAL) ou Líder do Projeto designado.
    */
   public static canValidateReadiness(context: UserSessionContext, projectId: string): ResourceAccessCheck {
+    if (context.role === UserRole.ADMIN_GERAL) {
+      return { allowed: true };
+    }
+
     const member = context.projectMemberships.find((m) => m.projectId === projectId);
     if (member?.role === UserRole.LIDER_PROJETO) {
       return { allowed: true };
@@ -96,7 +100,7 @@ export class AuthGuard {
 
     return {
       allowed: false,
-      reason: "A validação técnica formal de prontidão e homologação de processos é ato privativo do Líder do Projeto.",
+      reason: "A validação técnica formal de prontidão e homologação de processos é ato privativo do Líder do Projeto ou Administrador Geral.",
     };
   }
 
